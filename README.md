@@ -1,2 +1,2 @@
 # BoardVista---Group-13-
-goto the master branch
+go to the master branch the project is rests there
