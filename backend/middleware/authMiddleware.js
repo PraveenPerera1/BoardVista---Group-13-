@@ -35,10 +35,21 @@ const protect = async (req, res, next) => {
 
 const authorize = (...roles) => {
   return (req, res, next) => {
+    console.log('User role:', req.user.role);
+    console.log('Required roles:', roles);
+    console.log('Has access:', roles.includes(req.user.role));
+    
     if (!roles.includes(req.user.role)) {
+      let message = `User role ${req.user.role} is not authorized to access this route`;
+      
+      // Special message for boarding creation
+      if (roles.includes('owner') && req.originalUrl?.includes('/boarding') && req.method === 'POST') {
+        message = 'Only owners can create boarding houses. Please register as an owner or contact support.';
+      }
+      
       return res.status(403).json({
         success: false,
-        message: `User role ${req.user.role} is not authorized to access this route`,
+        message: message,
       });
     }
     next();

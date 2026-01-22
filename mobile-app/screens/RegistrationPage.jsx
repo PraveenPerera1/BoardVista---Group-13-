@@ -112,7 +112,7 @@ export default function RegistrationPage() {
     <SafeAreaView style={styles.safeArea}>
       <AppHeader />
       <ScrollView style={styles.container}>
-        <TouchableOpacity style={styles.backButton}>
+        <TouchableOpacity style={styles.backButton} onPress={loginpageHandler}>
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
 

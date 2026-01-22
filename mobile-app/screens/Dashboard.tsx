@@ -22,13 +22,14 @@ import { boardingService } from '../services/boardingService';
 interface BoardingPlace {
   _id: string;
   title: string;
-  address: {
-    street: string;
-    city: string;
-  };
+  address: string;
   coordinates: {
     latitude: number;
     longitude: number;
+  };
+  contact: {
+    email: string;
+    phone: string;
   };
   price: {
     monthly: number;
@@ -45,10 +46,17 @@ interface BoardingPlace {
   images: {
     url: string;
   }[];
+  description: string;
+  nearbyServices: string;
   isVerified: boolean;
-  averageRating: number;
-  reviewCount: number;
   isAvailable: boolean;
+  owner?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 const CATEGORIES = ['All', 'Male', 'Female'];
@@ -59,7 +67,7 @@ const CARD_WIDTH = (width - 48) / 2; // 2 columns with padding
 export default function BoardVistaDashboard() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [boardingData, setBoardingData] = useState([]);
+  const [boardingData, setBoardingData] = useState<BoardingPlace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigation = useNavigation();
@@ -186,16 +194,9 @@ export default function BoardVistaDashboard() {
         <View style={styles.cardLocation}>
           <Ionicons name="location-outline" size={14} color="#888" />
           <Text style={styles.cardLocationText} numberOfLines={1}>
-            {item.address.street}, {item.address.city}
+            {item.address}
           </Text>
         </View>
-        {item.averageRating > 0 && (
-          <View style={styles.ratingContainer}>
-            <Ionicons name="star" size={12} color="#FFA500" />
-            <Text style={styles.ratingText}>{item.averageRating.toFixed(1)}</Text>
-            <Text style={styles.reviewCountText}>({item.reviewCount})</Text>
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   );
@@ -204,7 +205,7 @@ export default function BoardVistaDashboard() {
   const filteredBoardingData = boardingData.filter(item => {
     const matchesCategory = selectedCategory === 'All' || item.gender === selectedCategory.toLowerCase();
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          item.address.city.toLowerCase().includes(searchQuery.toLowerCase());
+                          item.address.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 

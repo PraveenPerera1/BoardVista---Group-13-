@@ -3,131 +3,107 @@ const mongoose = require('mongoose');
 const boardingHouseSchema = new mongoose.Schema({
   title: {
     type: String,
-    required: [true, 'Please add a title'],
-    trim: true,
-  },
-  description: {
-    type: String,
-    required: [true, 'Please add a description'],
-  },
-  owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
     required: true,
+    trim: true
   },
   address: {
-    street: {
-      type: String,
-      required: true,
-    },
-    city: {
-      type: String,
-      required: true,
-      default: 'Vavuniya',
-    },
-    state: {
-      type: String,
-      default: 'Northern Province',
-    },
-    zipCode: {
-      type: String,
-    },
+    type: String,
+    required: true
   },
   coordinates: {
     latitude: {
       type: Number,
-      required: true,
+      required: true
     },
     longitude: {
       type: Number,
+      required: true
+    }
+  },
+  contact: {
+    email: {
+      type: String,
       required: true,
+      lowercase: true,
+      trim: true
     },
+    phone: {
+      type: String,
+      required: true
+    }
   },
   price: {
     monthly: {
       type: Number,
-      required: [true, 'Please add monthly rent'],
+      required: true
     },
     deposit: {
       type: Number,
-      required: [true, 'Please add deposit amount'],
-    },
+      required: true
+    }
+  },
+  gender: {
+    type: String,
+    enum: ['male', 'female'],
+    required: true
   },
   facilities: [{
     type: String,
-    enum: [
-      'WiFi',
-      'Parking',
-      'Laundry',
-      'Kitchen',
-      'Air Conditioning',
-      'Hot Water',
-      'Study Room',
-      'Gym',
-      'Security',
-      'CCTV',
-      'Backup Power',
-      'Water Supply',
-    ],
+    enum: ['Beds', 'Table', 'Chairs', 'Fans', 'Kitchen', 'Attached Bathroom', 'Free Electricity', 'Free Water', 'Study Area']
   }],
   roomTypes: [{
     name: {
       type: String,
-      required: true,
+      required: true
     },
     capacity: {
       type: Number,
-      required: true,
+      required: true
     },
     available: {
       type: Number,
-      required: true,
+      required: true
     },
     price: {
       type: Number,
-      required: true,
-    },
+      required: true
+    }
   }],
   images: [{
     url: {
       type: String,
-      required: true,
-    },
-    public_id: String,
+      required: true
+    }
   }],
-  rules: [{
+  description: {
     type: String,
-  }],
-  gender: {
+    trim: true
+  },
+  nearbyServices: {
     type: String,
-    enum: ['male', 'female'],
-    required: true,
+    trim: true
   },
   isAvailable: {
     type: Boolean,
-    default: true,
+    default: true
   },
   isVerified: {
     type: Boolean,
-    default: false,
+    default: false
   },
-  averageRating: {
-    type: Number,
-    default: 0,
-  },
-  reviewCount: {
-    type: Number,
-    default: 0,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  }
 }, {
-  timestamps: true,
+  timestamps: true
 });
 
-boardingHouseSchema.index({ 'address.city': 1, gender: 1 });
-boardingHouseSchema.index({ coordinates: '2dsphere' });
+// Index for location-based queries
+boardingHouseSchema.index({ 'coordinates.latitude': 1, 'coordinates.longitude': 1 });
+boardingHouseSchema.index({ gender: 1 });
+boardingHouseSchema.index({ isAvailable: 1 });
+boardingHouseSchema.index({ isVerified: 1 });
 
 module.exports = mongoose.model('BoardingHouse', boardingHouseSchema);
