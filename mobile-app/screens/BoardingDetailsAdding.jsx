@@ -52,7 +52,15 @@ const CustomCheckbox = ({ label, value, onValueChange }) => (
 export default function AddListingScreen() {
   const navigation = useNavigation();
   
-  const LogoutHandler = () => { navigation.replace("HomePage"); }
+  const LogoutHandler = async () => { 
+    try {
+      // Clear the authentication token from AsyncStorage
+      await AsyncStorage.removeItem('authToken'); 
+      navigation.replace("HomePage"); 
+    } catch (e) {
+      console.error("Logout failed", e);
+    }
+  }
   const skipHandler = () => { navigation.replace("Dashboard"); }
 
   const [showMap, setShowMap] = useState(false);
@@ -128,17 +136,9 @@ export default function AddListingScreen() {
       Alert.alert('Missing Info', 'Please fill in Name and Rent.');
       return;
     }
-    if (!formData.address) {
-      Alert.alert('Missing Info', 'Please enter an Address in Step 1.');
-      return;
-    }
-    if (formData.latitude === 0 || formData.longitude === 0) {
-      Alert.alert('Location Required', 'Please pick a location on the map in Step 2.');
-      return;
-    }
     if (photos.length === 0) {
       Alert.alert('Images Required', 'Please add at least one image URL.');
-      return;
+     //return;
     }
     if (!agreed) {
       Alert.alert('Policy', 'Please agree to the policies.');
@@ -162,18 +162,13 @@ export default function AddListingScreen() {
       // 3. Construct Data
       const boardingData = {
         title: formData.name,
-        
-        // Address is purely manual text
-        address: formData.address, 
-          
-        
-
-        // Coordinates from Map
+        address: formData.address,
+        email: formData.email,
+        phone: formData.phone,
         coordinates: {
-          latitude: formData.latitude, 
-          longitude: formData.longitude 
+          latitude: formData.latitude || 8.7548,
+          longitude: formData.longitude || 80.4979 
         },
-
         price: {
           monthly: Number(formData.monthlyRent),
           deposit: Number(formData.monthlyRent) * 2

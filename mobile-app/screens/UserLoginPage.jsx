@@ -114,8 +114,8 @@ const UserLoginPage = () => {
 
         {/* Form Content */}
         <View style={styles.formContent}>
-          <Text style={styles.title}>Login as Owner</Text>
-          <Text style={styles.subtitle}>(Boarding House Owner)</Text>
+          <Text style={styles.title}>Login as user</Text>
+          
 
           {/* Email Input */}
           <TextInput

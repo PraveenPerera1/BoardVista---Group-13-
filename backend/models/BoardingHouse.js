@@ -90,11 +90,6 @@ const boardingHouseSchema = new mongoose.Schema({
   isVerified: {
     type: Boolean,
     default: false
-  },
-  owner: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
   }
 }, {
   timestamps: true

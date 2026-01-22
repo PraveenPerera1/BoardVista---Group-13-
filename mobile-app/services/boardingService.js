@@ -1,11 +1,11 @@
-import api from '../config/api';
+import { api, publicApi } from '../config/api';
 
 // Boarding related API calls
 export const boardingService = {
   // Get all boarding listings
   getAllBoardings: async () => {
     try {
-      const response = await api.get('/boarding');
+      const response = await publicApi.get('/boarding');
       return response.data;
     } catch (error) {
       console.error('Error fetching boardings:', error);
@@ -16,7 +16,7 @@ export const boardingService = {
   // Get boarding by ID
   getBoardingById: async (id) => {
     try {
-      const response = await api.get(`/boarding/${id}`);
+      const response = await publicApi.get(`/boarding/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching boarding:', error);
@@ -24,9 +24,10 @@ export const boardingService = {
     }
   },
 
-  // Create new boarding listing
+  // Create new boarding listing (auth required)
   createBoarding: async (boardingData) => {
     try {
+      console.log('Creating boarding with authenticated api:', api.defaults.baseURL);
       const response = await api.post('/boarding', boardingData);
       return response.data;
     } catch (error) {
@@ -35,7 +36,7 @@ export const boardingService = {
     }
   },
 
-  // Update boarding listing
+  // Update boarding listing (auth required)
   updateBoarding: async (id, boardingData) => {
     try {
       const response = await api.put(`/boarding/${id}`, boardingData);
@@ -46,7 +47,7 @@ export const boardingService = {
     }
   },
 
-  // Delete boarding listing
+  // Delete boarding listing (auth required)
   deleteBoarding: async (id) => {
     try {
       const response = await api.delete(`/boarding/${id}`);

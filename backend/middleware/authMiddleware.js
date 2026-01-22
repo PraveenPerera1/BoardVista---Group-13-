@@ -17,7 +17,7 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
-      console.error(error);
+      console.log(error);
       res.status(401).json({
         success: false,
         message: 'Not authorized to access this route',
@@ -29,6 +29,7 @@ const protect = async (req, res, next) => {
     res.status(401).json({
       success: false,
       message: 'Not authorized to access this route',
+      
     });
   }
 };

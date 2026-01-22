@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const BoardingHouse = require('../models/BoardingHouse');
-const auth = require('../middleware/auth');
 
 // Create a new boarding house listing
-router.post('/', auth, async (req, res) => {
+router.post('/', async (req, res) => {
+  console.log("ewquest receieved");
   try {
     const {
       title,
@@ -62,7 +62,7 @@ router.post('/', auth, async (req, res) => {
       nearbyServices,
       isAvailable: isAvailable !== undefined ? isAvailable : true,
       isVerified: isVerified !== undefined ? isVerified : false,
-      owner: req.user.id
+      owner: '6972499a70b8f85550471d04' // Default owner ID for testing
     });
 
     await boardingHouse.save();
@@ -160,17 +160,12 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update boarding house
-router.put('/:id', auth, async (req, res) => {
+router.put('/:id', async (req, res) => {
   try {
     const boardingHouse = await BoardingHouse.findById(req.params.id);
     
     if (!boardingHouse) {
       return res.status(404).json({ message: 'Boarding house not found' });
-    }
-
-    // Check if user owns this boarding house
-    if (boardingHouse.owner.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized to update this boarding house' });
     }
 
     const updates = req.body;
@@ -220,17 +215,12 @@ router.put('/:id', auth, async (req, res) => {
 });
 
 // Delete boarding house
-router.delete('/:id', auth, async (req, res) => {
+router.delete('/:id', async (req, res) => {
   try {
     const boardingHouse = await BoardingHouse.findById(req.params.id);
     
     if (!boardingHouse) {
       return res.status(404).json({ message: 'Boarding house not found' });
-    }
-
-    // Check if user owns this boarding house
-    if (boardingHouse.owner.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized to delete this boarding house' });
     }
 
     await BoardingHouse.findByIdAndDelete(req.params.id);
@@ -246,9 +236,9 @@ router.delete('/:id', auth, async (req, res) => {
 });
 
 // Get boarding houses by owner
-router.get('/owner/my-listings', auth, async (req, res) => {
+router.get('/owner/my-listings', async (req, res) => {
   try {
-    const boardingHouses = await BoardingHouse.find({ owner: req.user.id })
+    const boardingHouses = await BoardingHouse.find({}) // Get all boarding houses
       .sort({ createdAt: -1 });
 
     res.json(boardingHouses);

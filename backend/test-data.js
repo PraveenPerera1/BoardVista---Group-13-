@@ -6,20 +6,21 @@ require('dotenv').config();
 const sampleData = {
   title: "Happy Boarding House",
   description: "A comfortable boarding house in Vavuniya with all modern facilities",
-  address: {
-    street: "No. 300, 2nd Lane, Mosque Road, Pampaimadu",
-    city: "Vavuniya"
-  },
+  address: "No. 300, 2nd Lane, Mosque Road, Pampaimadu, Vavuniya",
   coordinates: {
     latitude: 8.7548,
     longitude: 80.4979
+  },
+  contact: {
+    email: "happyboarding@example.com",
+    phone: "024-1234567"
   },
   price: {
     monthly: 30000,
     deposit: 50000
   },
-  gender: "co-ed",
-  facilities: ["WiFi", "Parking", "Laundry", "Kitchen", "Air Conditioning"],
+  gender: "male",
+  facilities: ["Beds", "Table", "Chairs", "Fans", "Kitchen", "Attached Bathroom", "Free Electricity", "Free Water", "Study Area"],
   roomTypes: [
     {
       name: "Single Room",
@@ -35,7 +36,7 @@ const sampleData = {
     }
   ],
   images: [{ url: "https://picsum.photos/seed/boarding1/400/300" }],
-  rules: ["No smoking", "Quiet hours after 10 PM"],
+  nearbyServices: "Bus stop, Bank, Supermarket, Hospital nearby",
   isAvailable: true,
   isVerified: true
 };
@@ -73,19 +74,21 @@ async function addSampleData() {
     const sample2 = {
       ...sampleData,
       title: "Green Valley Boarding",
-      address: {
-        street: "No. 45, Kandy Road, Vavuniya",
-        city: "Vavuniya"
-      },
+      address: "No. 45, Kandy Road, Vavuniya",
       coordinates: {
         latitude: 8.7600,
         longitude: 80.5000
+      },
+      contact: {
+        email: "greenvalley@example.com",
+        phone: "024-7654321"
       },
       price: {
         monthly: 25000,
         deposit: 40000
       },
-      facilities: ["WiFi", "Parking", "Hot Water", "Study Room"],
+      gender: "female",
+      facilities: ["Beds", "Table", "Chairs", "Fans", "Kitchen", "Attached Bathroom", "Free Water", "Study Area"],
       roomTypes: [
         {
           name: "Single Room",
@@ -94,6 +97,7 @@ async function addSampleData() {
           price: 25000
         }
       ],
+      nearbyServices: "University, Library, Food court nearby",
       owner: owner._id
     };
 

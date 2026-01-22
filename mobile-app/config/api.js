@@ -1,15 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 
-// Detect if running in web or native
-const isWeb = typeof window !== 'undefined';
-
 // API Configuration
 const API_BASE_URL = __DEV__ 
-  ? 'http://10.66.87.89:5000/api' // Your Wi-Fi IP address
+  ? 'http://192.168.33.89:5000/api' // Your Wi-Fi IP address
   : 'https://your-production-api.com/api'; // Production URL later
 
-// Create axios instance
+// Main authenticated API instance (for user/owner operations)
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -22,16 +19,20 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
-      // Get token from AsyncStorage (native) or localStorage (web)
+      // Use localStorage for web, AsyncStorage for mobile
       let token;
-      if (isWeb) {
+      if (typeof window !== 'undefined') {
+        // Web environment
         token = localStorage.getItem('authToken');
       } else {
+        // Mobile environment
         token = await AsyncStorage.getItem('authToken');
       }
       
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('Token being sent:', token);
+        console.log('Authorization header:', config.headers.Authorization);
       }
     } catch (error) {
       console.log('Error getting auth token:', error);
@@ -48,11 +49,20 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Handle unauthorized access
       console.log('Unauthorized, redirecting to login');
     }
     return Promise.reject(error);
   }
 );
 
+// Public API instance (for boarding operations - no auth)
+const publicApi = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export { api, publicApi };
 export default api;
