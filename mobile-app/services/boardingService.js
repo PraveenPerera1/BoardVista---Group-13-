@@ -6,7 +6,7 @@ export const boardingService = {
   getAllBoardings: async () => {
     try {
       const response = await publicApi.get('/boarding');
-      return response.data;
+      return response.data.boardingHouses || response.data;
     } catch (error) {
       console.error('Error fetching boardings:', error);
       throw error;

@@ -85,10 +85,11 @@ export default function BoardVistaDashboard() {
       setLoading(true);
       setError(null);
       const response = await boardingService.getAllBoardings();
-      setBoardingData(response.data || []);
+      console.log('Boarding data received:', response);
+      setBoardingData(response || []);
     } catch (err) {
       console.error('Error fetching boarding data:', err);
-
+      setError('Failed to load boarding places. Please try again.');
       Alert.alert('Error', 'Failed to load boarding places. Please try again.');
     } finally {
       setLoading(false);

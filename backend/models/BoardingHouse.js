@@ -6,20 +6,27 @@ const boardingHouseSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
   address: {
     type: String,
     required: true
   },
   coordinates: {
-    latitude: {
-      type: Number,
-      required: true
-    },
-    longitude: {
-      type: Number,
-      required: true
-    }
+  type: {
+    type: String,
+    enum: ['Point'],
+    default: 'Point'
   },
+  coordinates: {
+    type: [Number],
+    required: true
+  }
+}
+,
   contact: {
     email: {
       type: String,
@@ -96,7 +103,8 @@ const boardingHouseSchema = new mongoose.Schema({
 });
 
 // Index for location-based queries
-boardingHouseSchema.index({ 'coordinates.latitude': 1, 'coordinates.longitude': 1 });
+boardingHouseSchema.index({ coordinates: '2dsphere' });
+
 boardingHouseSchema.index({ gender: 1 });
 boardingHouseSchema.index({ isAvailable: 1 });
 boardingHouseSchema.index({ isVerified: 1 });

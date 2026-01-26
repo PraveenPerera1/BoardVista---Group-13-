@@ -204,41 +204,48 @@ const getMyBoardingHouses = async (req, res) => {
 };
 
 const getNearbyBoardingHouses = async (req, res) => {
-  try {
-    const { latitude, longitude, maxDistance = 10000 } = req.query;
+  // try {
+  //   const { latitude, longitude, maxDistance = 10000 } = req.query;
 
-    if (!latitude || !longitude) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide latitude and longitude',
-      });
-    }
+  //   if (!latitude || !longitude) {
+  //     return res.status(400).json({
+  //       success: false,
+  //       message: 'Please provide latitude and longitude',
+  //     });
+  //   }
 
-    const boardingHouses = await BoardingHouse.find({
-      coordinates: {
-        $near: {
-          $geometry: {
-            type: 'Point',
-            coordinates: [parseFloat(longitude), parseFloat(latitude)],
-          },
-          $maxDistance: parseInt(maxDistance),
-        },
-      },
-    })
-      .populate('owner', 'name email phone')
-      .limit(20);
+  //   const boardingHouses = await BoardingHouse.find({
+  //     coordinates: {
+  //       $near: {
+  //         $geometry: {
+  //           type: 'Point',
+  //           coordinates: [parseFloat(longitude), parseFloat(latitude)],
+  //         },
+  //         $maxDistance: parseInt(maxDistance),
+  //       },
+  //     },
+  //   })
+  //     .populate('owner', 'name email phone')
+  //     .limit(20);
 
-    res.status(200).json({
-      success: true,
-      count: boardingHouses.length,
-      data: boardingHouses,
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+  //   res.status(200).json({
+  //     success: true,
+  //     count: boardingHouses.length,
+  //     data: boardingHouses,
+  //   });
+  // } catch (error) {
+  //   res.status(500).json({
+  //     success: false,
+  //     message: error.message,
+  //   });
+  // }
+  
+  return res.status(501).json({
+    success: false,
+    message: 'Nearby search not implemented yet',
+  });
+
+
 };
 
 module.exports = {

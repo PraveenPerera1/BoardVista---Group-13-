@@ -30,13 +30,10 @@ const userSchema = new mongoose.Schema({
     default: 'user',
   },
   phone: {
-    type: String,
+    type: Number,
     required: [true, 'Please add a phone number'],
   },
-  profileImage: {
-    type: String,
-    default: '',
-  },
+
   isVerified: {
     type: Boolean,
     default: false,
