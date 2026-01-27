@@ -30,7 +30,7 @@ const userSchema = new mongoose.Schema({
     default: 'user',
   },
   phone: {
-    type: Number,
+    type: String,
     required: [true, 'Please add a phone number'],
   },
 

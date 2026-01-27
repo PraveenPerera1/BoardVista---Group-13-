@@ -47,7 +47,6 @@ const registerUser = async (req, res) => {
         email: user.email,
         role: user.role,
         phone: user.phone,
-        profileImage: user.profileImage,
       },
     });
   } catch (error) {
@@ -97,7 +96,6 @@ const loginUser = async (req, res) => {
         email: user.email,
         role: user.role,
         phone: user.phone,
-        profileImage: user.profileImage,
       },
     });
   } catch (error) {
@@ -129,7 +127,6 @@ const updateProfile = async (req, res) => {
       name: req.body.name,
       email: req.body.email,
       phone: req.body.phone,
-      profileImage: req.body.profileImage,
     };
 
     const user = await User.findByIdAndUpdate(req.user.id, fieldsToUpdate, {

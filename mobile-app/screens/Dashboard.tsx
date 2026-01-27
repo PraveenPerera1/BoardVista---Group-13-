@@ -1,5 +1,5 @@
 import { Feather, Ionicons, MaterialIcons } from '@expo/vector-icons';
-import { useNavigation } from 'expo-router';
+import { useNavigation } from '@react-navigation/native';
 import { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -69,7 +69,7 @@ export default function BoardVistaDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [boardingData, setBoardingData] = useState<BoardingPlace[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const navigation = useNavigation();
 
   // Ref for smooth scrolling
@@ -86,7 +86,23 @@ export default function BoardVistaDashboard() {
       setError(null);
       const response = await boardingService.getAllBoardings();
       console.log('Boarding data received:', response);
-      setBoardingData(response || []);
+      
+      // Extract the boarding array from the response
+      let boardingArray = [];
+      if (Array.isArray(response)) {
+        boardingArray = response;
+      } else if (response && response.boardingHouses) {
+        boardingArray = response.boardingHouses;
+      } else if (response && Array.isArray(response.data)) {
+        boardingArray = response.data;
+      } else if (response && response.data && response.data.boardingHouses) {
+        boardingArray = response.data.boardingHouses;
+      } else if (response && response.data && Array.isArray(response.data.data)) {
+        boardingArray = response.data.data;
+      }
+      
+      console.log('Extracted boarding array:', boardingArray);
+      setBoardingData(boardingArray);
     } catch (err) {
       console.error('Error fetching boarding data:', err);
       setError('Failed to load boarding places. Please try again.');
@@ -105,10 +121,10 @@ export default function BoardVistaDashboard() {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
-  const handleNavigateToReview = () => {
-    // Logic to navigate to Review Page (e.g., navigation.navigate('Reviews'))
-    navigation.navigate("ReviewPage");
-    console.log("Navigate to Reviews");
+
+
+  const handleLogout = () => {
+    navigation.navigate("HomePage");
   };
 
   // --- Components ---
@@ -123,6 +139,9 @@ export default function BoardVistaDashboard() {
         </View>
       </View>
       <View style={styles.headerIcons}>
+        <TouchableOpacity style={styles.iconButton} onPress={() => handleLogout()}>
+          <Ionicons name="log-out-outline" size={24} color="#000" />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton}>
           <Ionicons name="notifications-outline" size={24} color="#000" />
         </TouchableOpacity>
@@ -172,7 +191,11 @@ export default function BoardVistaDashboard() {
       key={item._id} 
       style={styles.card} 
       activeOpacity={0.9}
-      onPress={() => (navigation as any).push('UserDashboard' as any, { boardingId: item._id } as any)}
+      onPress={() => {
+        console.log('Navigating to UserDashboard with boardingId:', item._id);
+        // Use React Navigation with params
+        navigation.navigate("UserDashboard", { boardingId: item._id });
+      }}
     >
       <View style={styles.imageContainer}>
         <Image
@@ -306,10 +329,7 @@ export default function BoardVistaDashboard() {
             <Text style={styles.navLabelActive}>Home</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.navItem} onPress={handleNavigateToReview}>
-            <Ionicons name="chatbox-ellipses-outline" size={24} color="#888" />
-            <Text style={styles.navLabel}>Review</Text>
-          </TouchableOpacity>
+          
 
           <TouchableOpacity style={styles.navItem} onPress={handleScrollToBottom}>
             <Ionicons name="people-outline" size={24} color="#888" />

@@ -1,101 +1,161 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import { useRoute } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
 import {
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
+  Alert,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
+import { reviewService } from '../services/reviewService';
 
 // --- Types ---
 interface Review {
-  id: string;
-  userName: string;
-  date: string;
+  _id?: string;
+  user?: {
+    name?: string;
+  };
   rating: number;
+  title?: string;
   comment: string;
+  createdAt?: string;
 }
-
-// --- Mock Data ---
-const MOCK_REVIEWS: Review[] = [
-  {
-    id: '1',
-    userName: 'Kasun Bandara',
-    date: '2 days ago',
-    rating: 5,
-    comment: 'Perfect location for Vavuniya uni students. Just 5 mins walking distance to the faculty. The owner is very helpful!',
-  },
-  {
-    id: '2',
-    userName: 'Amara Perera',
-    date: '1 week ago',
-    rating: 4,
-    comment: 'The room is spacious and clean. The only issue was the wifi speed, but manageable for studies.',
-  },
-  {
-    id: '3',
-    userName: 'S. Kumar',
-    date: '2 weeks ago',
-    rating: 5,
-    comment: 'Highly verified place. Security is good. Worth the price.',
-  },
-];
 
 const { width } = Dimensions.get('window');
 
 export default function ReviewScreen({ navigation }: { navigation?: any }) {
+  const route = useRoute();
+  const boardingId = route?.params?.boardingId || 'demo-id';
+  const boardingTitle = route?.params?.boardingTitle || 'Boarding House';
+
   const [userRating, setUserRating] = useState(0);
+  const [reviewTitle, setReviewTitle] = useState('');
   const [reviewText, setReviewText] = useState('');
-  const [reviews, setReviews] = useState(MOCK_REVIEWS);
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  // --- Fetch Reviews ---
+  useEffect(() => {
+    fetchReviews();
+  }, []);
+
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+      const response = await reviewService.getReviews(boardingId);
+      console.log('Reviews response:', response);
+      
+      // Handle different response formats
+      let reviewsData = [];
+      if (response && response.data) {
+        reviewsData = response.data;
+      } else if (Array.isArray(response)) {
+        reviewsData = response;
+      }
+      
+      setReviews(reviewsData);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      // Use mock data as fallback
+      setReviews([
+        {
+          _id: '1',
+          user: { name: 'Kasun Bandara' },
+          rating: 5,
+          title: 'Excellent Place!',
+          comment: 'Perfect location for Vavuniya uni students.',
+          createdAt: new Date().toISOString()
+        },
+        {
+          _id: '2',
+          user: { name: 'Amara Perera' },
+          rating: 4,
+          title: 'Good Experience',
+          comment: 'The room is spacious and clean.',
+          createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+        }
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // --- Helper: Render Stars ---
-  const renderStars = (rating: number, size: number = 14) => {
+  const renderStars = (rating: number, size: number = 14, interactive: boolean = false, onStarPress?: (star: number) => void) => {
     return (
       <View style={styles.starRow}>
         {[1, 2, 3, 4, 5].map((star) => (
-          <Ionicons
+          <TouchableOpacity
             key={star}
-            name={star <= rating ? 'star' : 'star-outline'}
-            size={size}
-            color="#FFD700"
-            style={{ marginRight: 2 }}
-          />
+            disabled={!interactive}
+            onPress={() => interactive && onStarPress && onStarPress(star)}
+          >
+            <Ionicons
+              name={star <= rating ? 'star' : 'star-outline'}
+              size={size}
+              color={interactive && star <= rating ? '#FFD700' : (star <= rating ? '#FFD700' : '#DDD')}
+              style={{ marginRight: 2 }}
+            />
+          </TouchableOpacity>
         ))}
       </View>
     );
   };
 
-  // --- Helper: Rating Breakdown Bar ---
-  const renderRatingBar = (label: string, value: number) => (
-    <View style={styles.ratingBarContainer}>
-      <Text style={styles.ratingBarLabel}>{label}</Text>
-      <View style={styles.ratingBarBackground}>
-        <View style={[styles.ratingBarFill, { width: `${value}%` }]} />
-      </View>
-    </View>
-  );
-
-  const handleSubmitReview = () => {
-    if (reviewText.trim() === '') return;
+  const handleSubmitReview = async () => {
+    if (userRating === 0) {
+      Alert.alert('Rating Required', 'Please select a star rating');
+      return;
+    }
     
-    const newReview: Review = {
-      id: Math.random().toString(),
-      userName: 'Me', // Replace with logged in user
-      date: 'Just now',
-      rating: userRating || 5,
-      comment: reviewText,
-    };
+    if (reviewTitle.trim() === '') {
+      Alert.alert('Title Required', 'Please add a review title');
+      return;
+    }
+    
+    if (reviewText.trim() === '') {
+      Alert.alert('Review Required', 'Please write a review comment');
+      return;
+    }
 
-    setReviews([newReview, ...reviews]);
-    setReviewText('');
-    setUserRating(0);
+    try {
+      setSubmitting(true);
+      
+      const reviewData = {
+        boardingHouse: boardingId,
+        rating: userRating,
+        title: reviewTitle,
+        comment: reviewText,
+      };
+
+      console.log('Submitting review:', reviewData);
+      const response = await reviewService.createReview(reviewData);
+      console.log('Review submitted:', response);
+      
+      // Reset form
+      setUserRating(0);
+      setReviewTitle('');
+      setReviewText('');
+      
+      // Refresh reviews
+      await fetchReviews();
+      
+      Alert.alert('Success', 'Your review has been submitted successfully!');
+    } catch (error) {
+      console.error('Error submitting review:', error);
+      Alert.alert('Error', 'Failed to submit review. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -104,90 +164,98 @@ export default function ReviewScreen({ navigation }: { navigation?: any }) {
       
       {/* --- Header --- */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
+        <TouchableOpacity
+          style={styles.backButton}
           onPress={() => navigation?.goBack()}
         >
           <Feather name="arrow-left" size={24} color="#1A1A1A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Reviews</Text>
-        <View style={{ width: 40 }} /> {/* Spacer for balance */}
+        <View style={{ width: 40 }} />
       </View>
 
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
           
-          {/* --- Overall Rating Card --- */}
-          <View style={styles.overviewCard}>
-            <View style={styles.overviewHeader}>
-              <View>
-                <Text style={styles.bigRating}>4.8</Text>
-                <Text style={styles.totalReviews}>Based on 124 reviews</Text>
-                {renderStars(5, 18)}
-              </View>
-              <View style={styles.breakdownContainer}>
-                {renderRatingBar('Cleanliness', 90)}
-                {renderRatingBar('Location', 85)}
-                {renderRatingBar('Value', 95)}
-                {renderRatingBar('Safety', 100)}
-              </View>
-            </View>
+          {/* --- Boarding Info --- */}
+          <View style={styles.boardingInfoCard}>
+            <Text style={styles.boardingTitle}>{boardingTitle}</Text>
+            <Text style={styles.boardingSubtitle}>Share your experience</Text>
           </View>
 
-          <Text style={styles.sectionTitle}>User Reviews</Text>
+          {/* --- Write Review Section --- */}
+          <View style={styles.writeReviewCard}>
+            <Text style={styles.sectionTitle}>Write Your Review</Text>
 
-          {/* --- Review List --- */}
-          {reviews.map((item) => (
-            <View key={item.id} style={styles.reviewCard}>
-              <View style={styles.reviewHeader}>
-                <View style={styles.userInfo}>
-                  <Text style={styles.userName}>{item.userName}</Text>
-                  <Text style={styles.reviewDate}>{item.date}</Text>
-                </View>
-                <View style={styles.ratingBadge}>
-                  <Ionicons name="star" size={12} color="#FFD700" />
-                  <Text style={styles.ratingBadgeText}>{item.rating}</Text>
-                </View>
-              </View>
-              <Text style={styles.commentText}>{item.comment}</Text>
+            {/* Star Rating */}
+            <View style={styles.ratingContainer}>
+              <Text style={styles.inputLabel}>Overall Rating *</Text>
+              {renderStars(userRating, 32, true, setUserRating)}
             </View>
-          ))}
-        </ScrollView>
-
-        {/* --- Write Review Input --- */}
-        <View style={styles.inputContainer}>
-          <View style={styles.starInputRow}>
-            <Text style={styles.inputLabel}>Rate your stay:</Text>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setUserRating(star)}>
-                <Ionicons
-                  name={star <= userRating ? 'star' : 'star-outline'}
-                  size={24}
-                  color={star <= userRating ? '#FFD700' : '#DDD'}
-                  style={{ marginLeft: 5 }}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-          
-          <View style={styles.textInputWrapper}>
+            
+            {/* Review Title */}
             <TextInput
-              style={styles.textInput}
-              placeholder="Write a review..."
+              style={styles.titleInput}
+              placeholder="Review Title *"
+              placeholderTextColor="#999"
+              value={reviewTitle}
+              onChangeText={setReviewTitle}
+              maxLength={100}
+            />
+            
+            {/* Review Comment */}
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Share your experience... *"
               placeholderTextColor="#999"
               multiline
               value={reviewText}
               onChangeText={setReviewText}
+              maxLength={500}
             />
-            <TouchableOpacity style={styles.sendButton} onPress={handleSubmitReview}>
-              <Ionicons name="send" size={20} color="#fff" />
+            
+            <TouchableOpacity
+              style={[styles.submitButton, submitting && styles.submitButtonDisabled]}
+              onPress={handleSubmitReview}
+              disabled={submitting}
+            >
+              <Text style={styles.submitButtonText}>
+                {submitting ? 'Submitting...' : 'Submit Review'}
+              </Text>
             </TouchableOpacity>
           </View>
-        </View>
 
+          {/* --- Reviews List --- */}
+          <Text style={styles.sectionTitle}>Recent Reviews</Text>
+          
+          {loading ? (
+            <Text style={styles.loadingText}>Loading reviews...</Text>
+          ) : (
+            reviews.map((item) => (
+              <View key={item._id || item.id} style={styles.reviewCard}>
+                <View style={styles.reviewHeader}>
+                  <View style={styles.userInfo}>
+                    <Text style={styles.userName}>
+                      {item.user?.name || 'Anonymous User'}
+                    </Text>
+                    <Text style={styles.reviewDate}>
+                      {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : 'Recent'}
+                    </Text>
+                  </View>
+                  <View style={styles.ratingBadge}>
+                    <Ionicons name="star" size={12} color="#FFD700" />
+                    <Text style={styles.ratingBadgeText}>{item.rating}</Text>
+                  </View>
+                </View>
+                <Text style={styles.reviewTitleText}>{item.title}</Text>
+                <Text style={styles.commentText}>{item.comment}</Text>
+              </View>
+            ))
+          )}
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -389,5 +457,89 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 10,
+  },
+  // --- New Styles for Simplified Review Page ---
+  boardingInfoCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  boardingTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 4,
+  },
+  boardingSubtitle: {
+    fontSize: 14,
+    color: '#666',
+  },
+  writeReviewCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  ratingContainer: {
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  titleInput: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 15,
+    fontSize: 16,
+    marginBottom: 15,
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
+  },
+  commentInput: {
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
+    padding: 15,
+    fontSize: 16,
+    height: 100,
+    textAlignVertical: 'top',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#EFEFEF',
+  },
+  submitButton: {
+    backgroundColor: '#2A7FFF',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    backgroundColor: '#CCC',
+  },
+  submitButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  reviewTitleText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
+    marginBottom: 8,
+  },
+  loadingText: {
+    textAlign: 'center',
+    color: '#666',
+    fontSize: 16,
+    padding: 20,
   },
 });

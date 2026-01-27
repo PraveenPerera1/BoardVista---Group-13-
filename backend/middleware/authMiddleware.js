@@ -16,9 +16,10 @@ const protect = async (req, res, next) => {
       req.user = await User.findById(decoded.id);
 
       next();
+      return; // <--- ADD THIS (Stops the function here on success)
     } catch (error) {
       console.log(error);
-      res.status(401).json({
+      return res.status(401).json({ // <--- ADD return HERE
         success: false,
         message: 'Not authorized to access this route',
       });
@@ -26,14 +27,12 @@ const protect = async (req, res, next) => {
   }
 
   if (!token) {
-    res.status(401).json({
+    return res.status(401).json({ // <--- ADD return HERE
       success: false,
       message: 'Not authorized to access this route',
-      
     });
   }
 };
-
 const authorize = (...roles) => {
   return (req, res, next) => {
     console.log('User role:', req.user.role);

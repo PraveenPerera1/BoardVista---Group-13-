@@ -1,15 +1,16 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import {
-  Alert,
-  Pressable,
-  SafeAreaView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
+    Alert,
+    Pressable,
+    SafeAreaView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 // Import the icon library
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -37,12 +38,96 @@ const OwnerLoginPage = () => {
       setLoading(true);
       const response = await userService.login({ email, password, role: 'owner' });
       
-      // Store token (you'll need to implement AsyncStorage later)
-      console.log('Login successful:', response);
+      console.log("🔍 LOGIN RESPONSE STRUCTURE:", JSON.stringify(response, null, 2));
+      console.log("🔍 response.token exists:", !!response.token);
+      console.log("🔍 response.success:", response.success);
       
+      // Check multiple possible token locations in response
+      const token = response.token || response.data?.token || response.user?.token;
+      console.log("🔍 EXTRACTED TOKEN:", !!token);
+      
+      if (token) {
+        console.log("👉 STARTING TOKEN SAVE...");
+        console.log("🔑 Token to save:", token.substring(0, 20) + "...");
+
+        // 1. WEB STORAGE (Primary for web platform)
+        if (typeof window !== 'undefined' && window.localStorage) {
+           try {
+             window.localStorage.setItem('authToken', token);
+             window.localStorage.setItem('userRole', 'owner');
+             console.log("✅ SAVED TO BROWSER LOCAL STORAGE"); 
+             
+             // Verify immediately
+             const verifyToken = window.localStorage.getItem('authToken');
+             console.log("🔍 Verification - LocalStorage now has:", verifyToken?.substring(0, 20) + "...");
+             console.log("🔍 Verification - Token length:", verifyToken?.length);
+             if (!verifyToken) {
+               console.error("❌ CRITICAL: Token not found in localStorage immediately after save!");
+             }
+           } catch (e) {
+             console.error("❌ Browser localStorage save failed", e);
+           }
+        }
+
+        // 2. FALLBACK: SessionStorage for web
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+           try {
+             window.sessionStorage.setItem('authToken', token);
+             window.sessionStorage.setItem('userRole', 'owner');
+             console.log("✅ SAVED TO SESSION STORAGE (fallback)"); 
+           } catch (e) {
+             console.error("❌ SessionStorage save failed", e);
+           }
+        }
+
+        // 3. ASYNC STORAGE (For mobile platform)
+        try {
+          await AsyncStorage.setItem('authToken', token);
+          await AsyncStorage.setItem('userRole', 'owner');
+          console.log("✅ SAVED TO ASYNC STORAGE");
+          
+          // Verify it was saved
+          const verifyToken = await AsyncStorage.getItem('authToken');
+          console.log("🔍 Verification - AsyncStorage now has:", verifyToken?.substring(0, 20) + "...");
+        } catch (e) {
+          console.error("❌ AsyncStorage failed", e);
+        }
+      }
+      
+      // Add a longer delay to ensure token is properly saved across all storage mechanisms
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Final verification - check if token is actually stored
+      let finalVerification = false;
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const finalToken = window.localStorage.getItem('authToken');
+        finalVerification = !!finalToken;
+        console.log("🔍 FINAL VERIFICATION - Token in localStorage:", finalVerification);
+      }
+      
+      if (!finalVerification && typeof window !== 'undefined' && window.sessionStorage) {
+        const finalToken = window.sessionStorage.getItem('authToken');
+        finalVerification = !!finalToken;
+        console.log("🔍 FINAL VERIFICATION - Token in sessionStorage:", finalVerification);
+      }
+      
+      if (!finalVerification) {
+        const asyncToken = await AsyncStorage.getItem('authToken');
+        finalVerification = !!asyncToken;
+        console.log("🔍 FINAL VERIFICATION - Token in AsyncStorage:", finalVerification);
+      }
+      
+      if (!finalVerification) {
+        console.error("❌ CRITICAL: Token verification failed after all storage attempts!");
+        Alert.alert('Error', 'Login succeeded but token storage failed. Please try again.');
+        return;
+      }
+      
+      console.log('Login successful:', response);
       Alert.alert('Success', 'Login successful!');
       navigation.replace("BoardingDetailsAdding");
     } catch (error) {
+      console.log("Login Error:", error);
       Alert.alert('Login Failed', error.response?.data?.message || 'Invalid credentials');
     } finally {
       setLoading(false);

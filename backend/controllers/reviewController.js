@@ -1,7 +1,11 @@
 const Review = require('../models/Review');
 const BoardingHouse = require('../models/BoardingHouse');
 const { validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 
+// @desc    Get all reviews for a boarding house
+// @route   GET /api/review
+// @access  Public
 const getReviews = async (req, res) => {
   try {
     const { boardingHouse } = req.query;
@@ -33,6 +37,7 @@ const getReviews = async (req, res) => {
       data: reviews,
     });
   } catch (error) {
+    console.error('Error fetching reviews:', error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -40,6 +45,9 @@ const getReviews = async (req, res) => {
   }
 };
 
+// @desc    Create a new review
+// @route   POST /api/review
+// @access  Private
 const createReview = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -52,6 +60,7 @@ const createReview = async (req, res) => {
 
     const { boardingHouse, rating, title, comment } = req.body;
 
+    // Check if boarding house exists
     const boardingHouseExists = await BoardingHouse.findById(boardingHouse);
     if (!boardingHouseExists) {
       return res.status(404).json({
@@ -60,6 +69,7 @@ const createReview = async (req, res) => {
       });
     }
 
+    // Check if user already reviewed this boarding house
     const existingReview = await Review.findOne({
       user: req.user.id,
       boardingHouse,
@@ -72,10 +82,11 @@ const createReview = async (req, res) => {
       });
     }
 
+    // Create review
     req.body.user = req.user.id;
-
     const review = await Review.create(req.body);
 
+    // Populate and return the created review
     const populatedReview = await Review.findById(review._id)
       .populate('user', 'name profileImage')
       .populate('boardingHouse', 'title');
@@ -85,6 +96,7 @@ const createReview = async (req, res) => {
       data: populatedReview,
     });
   } catch (error) {
+    console.error('Error creating review:', error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -92,6 +104,9 @@ const createReview = async (req, res) => {
   }
 };
 
+// @desc    Update a review
+// @route   PUT /api/review/:id
+// @access  Private
 const updateReview = async (req, res) => {
   try {
     let review = await Review.findById(req.params.id);
@@ -103,6 +118,7 @@ const updateReview = async (req, res) => {
       });
     }
 
+    // Check if user owns the review
     if (review.user.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -122,6 +138,7 @@ const updateReview = async (req, res) => {
       data: review,
     });
   } catch (error) {
+    console.error('Error updating review:', error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -129,6 +146,9 @@ const updateReview = async (req, res) => {
   }
 };
 
+// @desc    Delete a review
+// @route   DELETE /api/review/:id
+// @access  Private
 const deleteReview = async (req, res) => {
   try {
     const review = await Review.findById(req.params.id);
@@ -140,6 +160,7 @@ const deleteReview = async (req, res) => {
       });
     }
 
+    // Check if user owns the review
     if (review.user.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -154,6 +175,64 @@ const deleteReview = async (req, res) => {
       data: {},
     });
   } catch (error) {
+    console.error('Error deleting review:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+// @desc    Get review statistics for a boarding house
+// @route   GET /api/review/stats/:boardingHouseId
+// @access  Public
+const getReviewStats = async (req, res) => {
+  try {
+    const { boardingHouseId } = req.params;
+
+    const stats = await Review.aggregate([
+      { $match: { boardingHouse: mongoose.Types.ObjectId(boardingHouseId) } },
+      {
+        $group: {
+          _id: '$boardingHouse',
+          averageRating: { $avg: '$rating' },
+          totalReviews: { $sum: 1 },
+          ratingDistribution: {
+            $push: '$rating'
+          }
+        }
+      }
+    ]);
+
+    if (stats.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          averageRating: 0,
+          totalReviews: 0,
+          ratingDistribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+        }
+      });
+    }
+
+    const result = stats[0];
+    
+    // Calculate rating distribution
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    result.ratingDistribution.forEach(rating => {
+      distribution[rating]++;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        averageRating: Math.round(result.averageRating * 10) / 10,
+        totalReviews: result.totalReviews,
+        ratingDistribution: distribution
+      }
+    });
+  } catch (error) {
+    console.error('Error getting review stats:', error);
     res.status(500).json({
       success: false,
       message: error.message,
@@ -166,4 +245,5 @@ module.exports = {
   createReview,
   updateReview,
   deleteReview,
+  getReviewStats,
 };

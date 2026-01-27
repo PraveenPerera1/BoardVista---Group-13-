@@ -21,26 +21,21 @@ const reviewSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Please add a review title'],
     trim: true,
+    maxlength: [100, 'Title cannot be more than 100 characters'],
   },
   comment: {
     type: String,
     required: [true, 'Please add a review comment'],
+    trim: true,
+    maxlength: [500, 'Comment cannot be more than 500 characters'],
   },
-  cleanliness: {
-    type: Number,
-    min: 1,
-    max: 5,
-  },
+  
   facilities: {
     type: Number,
     min: 1,
     max: 5,
   },
-  safety: {
-    type: Number,
-    min: 1,
-    max: 5,
-  },
+  
   location: {
     type: Number,
     min: 1,
@@ -51,18 +46,7 @@ const reviewSchema = new mongoose.Schema({
     min: 1,
     max: 5,
   },
-  images: [{
-    url: String,
-    public_id: String,
-  }],
-  isVerified: {
-    type: Boolean,
-    default: false,
-  },
-  helpful: {
-    type: Number,
-    default: 0,
-  },
+  
   createdAt: {
     type: Date,
     default: Date.now,
@@ -71,9 +55,10 @@ const reviewSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// Index for preventing duplicate reviews
 reviewSchema.index({ boardingHouse: 1, user: 1 }, { unique: true });
-reviewSchema.index({ boardingHouse: 1 });
 
+// Static method to calculate average rating
 reviewSchema.statics.getAverageRating = async function (boardingHouseId) {
   const obj = await this.aggregate([
     {
@@ -89,19 +74,28 @@ reviewSchema.statics.getAverageRating = async function (boardingHouseId) {
   ]);
 
   try {
-    await this.model('BoardingHouse').findByIdAndUpdate(boardingHouseId, {
-      averageRating: Math.ceil(obj[0] ? obj[0].averageRating : 0),
-      reviewCount: obj[0] ? obj[0].reviewCount : 0,
-    });
+    if (obj.length > 0) {
+      await this.model('BoardingHouse').findByIdAndUpdate(boardingHouseId, {
+        averageRating: Math.round(obj[0].averageRating * 10) / 10, // Round to 1 decimal
+        reviewCount: obj[0].reviewCount,
+      });
+    } else {
+      await this.model('BoardingHouse').findByIdAndUpdate(boardingHouseId, {
+        averageRating: 0,
+        reviewCount: 0,
+      });
+    }
   } catch (err) {
-    console.error(err);
+    console.error('Error updating boarding house rating:', err);
   }
 };
 
+// Post-save hook to update average rating
 reviewSchema.post('save', async function () {
   await this.constructor.getAverageRating(this.boardingHouse);
 });
 
+// Post-remove hook to update average rating
 reviewSchema.post('remove', async function () {
   await this.constructor.getAverageRating(this.boardingHouse);
 });

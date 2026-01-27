@@ -44,6 +44,7 @@ export default function RegistrationPage() {
   // State for form inputs
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState(''); //added newly
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,7 +56,7 @@ export default function RegistrationPage() {
   // State for custom dropdown
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userType, setUserType] = useState('Select user type...');
-  const userTypes = ['Student', 'Academic Staff', 'Owner'];
+  const userTypes = ['User', 'Owner'];
 
   // Handler for selecting a user type from the custom dropdown
   const selectUserType = (type) => {
@@ -65,7 +66,7 @@ export default function RegistrationPage() {
 
   // Registration function with API integration
   const handleRegistration = async () => {
-    if (!name || !email || !password || !confirmPassword) {
+    if (!name || !email || !phone || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -86,7 +87,7 @@ export default function RegistrationPage() {
       let role = 'user'; // default
       if (userType === 'Owner') {
         role = 'owner';
-      } else if (userType === 'Student' || userType === 'Academic Staff') {
+      } else if (userType === 'User') {
         role = 'user';
       }
       
@@ -95,14 +96,27 @@ export default function RegistrationPage() {
         email,
         password,
         role,
-        phone: '000-0000000' // You'll want to add phone field to form
+        phone: phone,
       });
 
       console.log('Registration successful:', response);
       Alert.alert('Success', 'Registration successful! Please login.');
       navigation.replace("HomePage");
     } catch (error) {
-      Alert.alert('Registration Failed', error.response?.data?.message || 'Registration failed');
+      const backendErrors = error?.response?.data?.errors;
+      console.error('Registration failed response:', error?.response?.data);
+      if (backendErrors && backendErrors.length > 0) {
+        console.error('First validation error:', backendErrors[0]);
+      }
+      if (Array.isArray(backendErrors) && backendErrors.length > 0) {
+        const message = backendErrors
+          .map((e) => e?.msg)
+          .filter(Boolean)
+          .join('\n');
+        Alert.alert('Registration Failed', message || 'Registration failed');
+      } else {
+        Alert.alert('Registration Failed', error?.response?.data?.message || 'Registration failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -134,6 +148,15 @@ export default function RegistrationPage() {
           value={email}
           onChangeText={setEmail}
         />
+        <TextInput
+          style={styles.textInput}
+          placeholder="Phone Number"
+          placeholderTextColor="#999"
+          keyboardType="phone-pad"
+          value={phone}
+          onChangeText={setPhone}
+        />
+
 
         {/* --- Password Input --- */}
         <View style={styles.inputContainer}>

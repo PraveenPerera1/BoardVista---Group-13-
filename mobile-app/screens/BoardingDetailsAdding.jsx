@@ -1,6 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
+
 import {
   Alert,
   Image,
@@ -163,11 +165,16 @@ export default function AddListingScreen() {
       const boardingData = {
         title: formData.name,
         address: formData.address,
-        email: formData.email,
-        phone: formData.phone,
+        contact: {
+          email: formData.email,
+          phone: formData.phone
+        },
         coordinates: {
-          latitude: formData.latitude || 8.7548,
-          longitude: formData.longitude || 80.4979 
+          type: "Point",
+          coordinates: [
+            Number(formData.longitude),
+            Number(formData.latitude)
+          ]
         },
         price: {
           monthly: Number(formData.monthlyRent),
