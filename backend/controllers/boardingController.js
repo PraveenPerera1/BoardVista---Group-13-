@@ -155,29 +155,43 @@ const updateBoardingHouse = async (req, res) => {
 
 const deleteBoardingHouse = async (req, res) => {
   try {
+    console.log('Delete request received for ID:', req.params.id);
+    console.log('User making request:', req.user);
+    
     const boardingHouse = await BoardingHouse.findById(req.params.id);
+    console.log('Found boarding house:', boardingHouse);
 
     if (!boardingHouse) {
+      console.log('Boarding house not found');
       return res.status(404).json({
         success: false,
         message: 'Boarding house not found',
       });
     }
 
+    console.log('Boarding owner:', boardingHouse.owner.toString());
+    console.log('Request user ID:', req.user.id);
+    console.log('Request user role:', req.user.role);
+
     if (boardingHouse.owner.toString() !== req.user.id && req.user.role !== 'admin') {
+      console.log('Authorization failed');
       return res.status(403).json({
         success: false,
         message: 'Not authorized to delete this boarding house',
       });
     }
 
-    await boardingHouse.remove();
+    console.log('Attempting to delete boarding...');
+    await BoardingHouse.findByIdAndDelete(req.params.id);
+    console.log('Boarding deleted successfully');
 
     res.status(200).json({
       success: true,
       data: {},
     });
   } catch (error) {
+    console.log('Delete error details:', error);
+    console.log('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       message: error.message,

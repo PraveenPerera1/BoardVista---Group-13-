@@ -5,23 +5,26 @@ import {
   ImageBackground,
   SafeAreaView,
   ScrollView,
+  StatusBar,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { userService } from '../services/userService';
 
 // --- Header Component ---
 const AppHeader = () => (
   <ImageBackground
-    source={{ uri: 'https://picsum.photos/seed/header/600/400' }} // Placeholder
-    style={styles.headerBackground}>
+    source={require("../assets/images/background.jpg")}
+    style={styles.headerBackground}
+    imageStyle={styles.headerImage}
+  >
     <View style={styles.headerOverlay}>
-      <Text style={styles.welcomeText}>WELCOME TO</Text>
+      <Text style={styles.welcomeText}>JOIN THE COMMUNITY</Text>
       <Text style={styles.logo}>BOARDVISTA</Text>
-      <Text style={styles.subtitle}>Discover the Best Stays in Vavuniya</Text>
+      <Text style={styles.subtitle}>Create your account today</Text>
     </View>
   </ImageBackground>
 );
@@ -29,7 +32,8 @@ const AppHeader = () => (
 // --- Footer Component ---
 const AppFooter = () => (
   <View style={styles.footer}>
-    <Text style={styles.footerText}> 2025 BoardVista</Text>
+    <Text style={styles.footerText}> 2025 BoardVista • All Rights Reserved</Text>
+    <Text style={styles.footerText}>© 2025 BoardVista • All Rights Reserved</Text>
   </View>
 );
 
@@ -124,299 +128,410 @@ export default function RegistrationPage() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <AppHeader />
-      <ScrollView style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={loginpageHandler}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.title}>Create an Account</Text>
-
-        {/* --- Form Fields --- */}
-        <TextInput
-          style={styles.textInput}
-          placeholder="Full Name"
-          placeholderTextColor="#999"
-          value={name}
-          onChangeText={setName}
-        />
-        <TextInput
-          style={styles.textInput}
-          placeholder="abc@gmail.com"
-          placeholderTextColor="#999"
-          keyboardType="email-address"
-          value={email}
-          onChangeText={setEmail}
-        />
-        <TextInput
-          style={styles.textInput}
-          placeholder="Phone Number"
-          placeholderTextColor="#999"
-          keyboardType="phone-pad"
-          value={phone}
-          onChangeText={setPhone}
-        />
-
-
-        {/* --- Password Input --- */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            placeholderTextColor="#999"
-            secureTextEntry={securePassword}
-            value={password}
-            onChangeText={setPassword}
-          />
-          <TouchableOpacity
-            style={styles.toggleButton}
-            onPress={() => setSecurePassword(!securePassword)}>
-            <Text style={styles.toggleText}>
-              {securePassword ? '[Show]' : '[Hide]'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* --- Confirm Password Input --- */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Confirm Password"
-            placeholderTextColor="#999"
-            secureTextEntry={secureConfirm}
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-          />
-          <TouchableOpacity
-            style={styles.toggleButton}
-            onPress={() => setSecureConfirm(!secureConfirm)}>
-            <Text style={styles.toggleText}>
-              {secureConfirm ? '[Show]' : '[Hide]'}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* --- Custom User Type Dropdown --- */}
-        <View style={styles.dropdownWrapper}>
-          <Text style={styles.dropdownLabel}>Register as:</Text>
-          <TouchableOpacity
-            style={styles.dropdownButton}
-            onPress={() => setDropdownOpen(!dropdownOpen)}>
-            <Text style={styles.dropdownButtonText}>{userType}</Text>
-            <Text style={styles.dropdownArrow}>{dropdownOpen ? '▲' : '▼'}</Text>
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <AppHeader />
+        
+        {/* --- Form Card --- */}
+        <View style={styles.formCard}>
+          
+          <TouchableOpacity style={styles.backButton} onPress={loginpageHandler}>
+            <Text style={styles.backArrow}>← Back</Text>
           </TouchableOpacity>
 
-          {/* Dropdown Menu */}
-          {dropdownOpen && (
-            <View style={styles.dropdownMenu}>
-              {userTypes.map((type, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.dropdownItem,
-                    // Add a border to all items except the last one
-                    index < userTypes.length - 1 && styles.itemSeparator,
-                  ]}
-                  onPress={() => selectUserType(type)}>
-                  <Text style={styles.dropdownItemText}>{type}</Text>
-                </TouchableOpacity>
-              ))}
+          <Text style={styles.title}>Get Started</Text>
+          <Text style={styles.sectionSubtitle}>Fill in your details to continue</Text>
+
+          {/* --- Form Fields --- */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Full Name</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="e.g. example"
+              placeholderTextColor="#94A3B8"
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Email Address</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="example@example.com"
+              placeholderTextColor="#94A3B8"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Phone Number</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="+94 7X XXX XXXX"
+              placeholderTextColor="#94A3B8"
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+            />
+          </View>
+
+          {/* --- Password Input --- */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                placeholderTextColor="#94A3B8"
+                secureTextEntry={securePassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity
+                style={styles.toggleButton}
+                onPress={() => setSecurePassword(!securePassword)}>
+                <Text style={styles.toggleText}>
+                  {securePassword ? 'Show' : 'Hide'}
+                </Text>
+              </TouchableOpacity>
             </View>
-          )}
+          </View>
+
+          {/* --- Confirm Password Input --- */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Confirm Password</Text>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="••••••••"
+                placeholderTextColor="#94A3B8"
+                secureTextEntry={secureConfirm}
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+              />
+              <TouchableOpacity
+                style={styles.toggleButton}
+                onPress={() => setSecureConfirm(!secureConfirm)}>
+                <Text style={styles.toggleText}>
+                  {secureConfirm ? 'Show' : 'Hide'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* --- Custom User Type Dropdown --- */}
+          <View style={styles.dropdownWrapper}>
+            <Text style={styles.inputLabel}>I am a:</Text>
+            <TouchableOpacity
+              style={[styles.dropdownButton, dropdownOpen && styles.dropdownButtonActive]}
+              onPress={() => setDropdownOpen(!dropdownOpen)}>
+              <Text style={[
+                styles.dropdownButtonText, 
+                userType === 'Select user type...' && styles.placeholderText
+              ]}>
+                {userType}
+              </Text>
+              <Text style={styles.dropdownArrow}>{dropdownOpen ? '▲' : '▼'}</Text>
+            </TouchableOpacity>
+
+            {/* Dropdown Menu */}
+            {dropdownOpen && (
+              <View style={styles.dropdownMenu}>
+                {userTypes.map((type, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.dropdownItem,
+                      index < userTypes.length - 1 && styles.itemSeparator,
+                    ]}
+                    onPress={() => selectUserType(type)}>
+                    <Text style={styles.dropdownItemText}>{type}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+          </View>
+          {/* --- End Dropdown --- */}
+
+          <TouchableOpacity
+            style={[styles.registerButton, loading && styles.registerButtonDisabled]}
+            onPress={handleRegistration}
+            disabled={loading}
+          >
+            <Text style={styles.registerButtonText}>
+              {loading ? 'Creating Account...' : 'Create Account'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.loginLink} onPress={() => navigation.replace("HomePage")}>
+            <Text style={styles.loginLinkText}>
+              Already have an account? <Text style={styles.loginLinkHighlight}>Log In</Text>
+            </Text>
+          </TouchableOpacity>
+
         </View>
-        {/* --- End Dropdown --- */}
 
-        <TouchableOpacity
-          style={[styles.registerButton, loading && styles.registerButtonDisabled]}
-          onPress={handleRegistration}
-          disabled={loading}
-        >
-          <Text style={styles.registerButtonText}>
-            {loading ? 'Registering...' : 'Register'}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.loginLink} onPress={() => navigation.replace("HomePage")}>
-          <Text style={styles.loginLinkText}>
-            Already have an account? Login
-          </Text>
-        </TouchableOpacity>
+        <AppFooter />
       </ScrollView>
-      <AppFooter />
     </SafeAreaView>
   );
 }
 
-// === STYLESHEET ===
+// === MODERN STYLESHEET ===
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#fff', // White background for the safe area
+    backgroundColor: '#F8FAFC', // Slate 50
   },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  
   // Header
   headerBackground: {
     width: '100%',
-    height: 200,
+    height: 240,
+    justifyContent: 'center',
+    marginBottom: -40, // Pull card up into header
+    zIndex: 0,
+  },
+  headerImage: {
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    opacity: 0.8,
   },
   headerOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(58, 90, 120, 0.8)',
+    backgroundColor: 'rgba(15, 23, 42, 0.85)', // Dark Slate Overlay
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 15,
+    padding: 20,
+    paddingBottom: 60,
   },
   welcomeText: {
-    color: '#fff',
-    fontSize: 16,
-    letterSpacing: 1,
+    color: '#94A3B8', // Slate 400
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginBottom: 5,
   },
   logo: {
-    fontSize: 40,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '800',
     color: '#fff',
+    letterSpacing: 1,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#fff',
-    marginTop: 5,
+    fontSize: 14,
+    color: '#E2E8F0',
+    marginTop: 4,
   },
-  // Form Container
-  container: {
-    flex: 1,
-    backgroundColor: '#e0e0e0', // Light gray background from image
-    padding: 25,
+
+  // Form Card
+  formCard: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    marginHorizontal: 16,
+    padding: 24,
+    shadowColor: '#64748B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
+    marginBottom: 20,
   },
+  
+  // Navigation
   backButton: {
     alignSelf: 'flex-start',
-    marginBottom: 10,
+    marginBottom: 20,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
   },
   backArrow: {
-    fontSize: 24,
-    color: '#333',
+    fontSize: 14,
+    color: '#475569',
+    fontWeight: '600',
   },
+  
+  // Text Styles
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 25,
-    textAlign: 'left',
+    fontWeight: '800',
+    color: '#1E293B', // Slate 800
+    marginBottom: 5,
   },
-  // Form Inputs
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 25,
+  },
+
+  // Inputs
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155', // Slate 700
+    marginBottom: 6,
+    marginLeft: 4,
+  },
   textInput: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 15,
-    fontSize: 16,
-    marginBottom: 15,
+    backgroundColor: '#F8FAFC', // Very light grey
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#1E293B',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#E2E8F0', // Slate 200
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginBottom: 15,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#E2E8F0',
   },
   input: {
     flex: 1,
-    padding: 15,
-    fontSize: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 15,
+    color: '#1E293B',
   },
   toggleButton: {
-    padding: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
   },
   toggleText: {
-    color: '#555',
-    fontSize: 12,
+    color: '#2563EB', // Brand Blue
+    fontSize: 13,
+    fontWeight: '600',
   },
+
   // Custom Dropdown
   dropdownWrapper: {
-    marginTop: 10,
-    marginBottom: 20,
-  },
-  dropdownLabel: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 5,
+    marginTop: 5,
+    marginBottom: 25,
   },
   dropdownButton: {
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 15,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#E2E8F0',
+  },
+  dropdownButtonActive: {
+    borderColor: '#2563EB',
+    backgroundColor: '#EFF6FF',
   },
   dropdownButtonText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#1E293B',
+    fontWeight: '500',
+  },
+  placeholderText: {
+    color: '#94A3B8',
   },
   dropdownArrow: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 12,
+    color: '#64748B',
   },
   dropdownMenu: {
     backgroundColor: '#fff',
-    borderRadius: 8,
-    marginTop: 5,
-    borderColor: '#ccc',
+    borderRadius: 12,
+    marginTop: 6,
+    borderColor: '#E2E8F0',
     borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+    overflow: 'hidden',
   },
   dropdownItem: {
-    padding: 15,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
   },
   itemSeparator: {
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#F1F5F9',
   },
   dropdownItemText: {
-    fontSize: 16,
-    color: '#333',
+    fontSize: 15,
+    color: '#334155',
   },
-  // Buttons
+
+  // Action Buttons
   registerButton: {
-    backgroundColor: '#fff',
-    padding: 15,
-    borderRadius: 25,
+    backgroundColor: '#2563EB', // Brand Blue
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 10,
-    // Simple shadow like the login button
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   registerButtonText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
+    letterSpacing: 0.5,
   },
   registerButtonDisabled: {
-    opacity: 0.6,
+    backgroundColor: '#94A3B8',
+    elevation: 0,
+    shadowOpacity: 0,
   },
   loginLink: {
     marginTop: 20,
     alignItems: 'center',
-    paddingBottom: 40, // Ensure space at the bottom
+    paddingVertical: 10,
   },
   loginLinkText: {
-    color: '#007BFF',
+    color: '#64748B',
     fontSize: 14,
   },
+  loginLinkHighlight: {
+    color: '#2563EB',
+    fontWeight: '700',
+  },
+
   // Footer
   footer: {
-    backgroundColor: '#90b4ce',
-    padding: 20,
+    paddingVertical: 24,
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   footerText: {
-    color: '#fff',
-    fontSize: 14,
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

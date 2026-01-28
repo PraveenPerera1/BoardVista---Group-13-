@@ -276,26 +276,7 @@ export default function UserDashboard() {
               </TouchableOpacity>
             </View>
 
-            {/* FAQ Card */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Ask a Question</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="What would you like to know?"
-                placeholderTextColor="#94A3B8"
-              />
-              {/* FAQ Skeleton Loaders */}
-              <View style={styles.faqContainer}>
-                <View style={styles.faqItem}>
-                    <View style={styles.skeletonLineLong} />
-                    <View style={styles.skeletonLineShort} />
-                </View>
-                <View style={styles.faqItem}>
-                    <View style={styles.skeletonLineLong} />
-                    <View style={styles.skeletonLineShort} />
-                </View>
-              </View>
-            </View>
+            
           </View>
 
         </View>

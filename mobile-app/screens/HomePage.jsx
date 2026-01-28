@@ -1,10 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
-import { Dimensions, Image, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, SafeAreaView, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 // Get screen width for responsive image sizing
 const { width } = Dimensions.get('window');
 // Calculate width for 3 images with 10px spacing
-const imageWidth = (width - 40 - 20) / 3; // (Screen width - 2*padding - 2*spacing) / 3
+// Preserving your logic exactly
+const imageWidth = (width - 48 - 20) / 3; // Adjusted padding slightly for modern layout
 
 export default function HomePage()  {
   const navigation = useNavigation();
@@ -16,207 +17,321 @@ export default function HomePage()  {
     navigation.replace("OwnerLoginPage");
   }
   
-
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         
+        {/* === HERO HEADER === */}
         <View style={styles.header}>
-          <Text style={styles.headerLogo}>BOARDVISTA</Text>
-          <Text style={styles.headerTagline}>Discover the Best Stays in Vavuniya</Text>
+          <View style={styles.headerContent}>
+            <Text style={styles.headerLogo}>BOARDVISTA</Text>
+            <View style={styles.taglineContainer}>
+              <Text style={styles.headerTagline}>Discover the Best Stays in Vavuniya</Text>
+            </View>
+          </View>
+          {/* Decorative Circle for visual flair */}
+          <View style={styles.decorativeCircle} />
         </View>
 
-        
+        {/* === MAIN CONTENT === */}
         <View style={styles.mainContent}>
-          <Text style={styles.mainLogo}>WELCOME TO BOARDVISTA</Text>
-          <Text style={styles.mainTagline}>Find your space - Live your dream{"\n\n"}</Text>
-
           
-          <View style={styles.galleryContainer}>
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeLabel}>WELCOME</Text>
+            <Text style={styles.mainHeading}>Find your space.{'\n'}Live your dream.</Text>
+          </View>
+
+          {/* === FEATURED GALLERY === */}
+          <View style={styles.galleryCard}>
             <View style={styles.imageRow}>
-               
-              
-              <View style={[styles.imagePlaceholder, { backgroundColor: '#a9a9a9' }]} >
-              <Image source={require("../assets/images/boardingimg1.jpg")} style={[styles.imagePlaceholder, { backgroundColor: '#a9a9a9' }]} />
+              <View style={styles.imageWrapper}>
+                <Image source={require("../assets/images/boardingimg1.jpg")} style={[styles.galleryImage, { width: imageWidth }]} />
               </View>
-              <View style={[styles.imagePlaceholder, { backgroundColor: '#c0c0c0' }]} >
-              <Image source={require("../assets/images/boardingimg2.jpeg")} style={[styles.imagePlaceholder, { backgroundColor: '#a9a9a9' }]} />
+              <View style={styles.imageWrapper}>
+                <Image source={require("../assets/images/boardingimg2.jpeg")} style={[styles.galleryImage, { width: imageWidth }]} />
               </View>
-              <View style={[styles.imagePlaceholder, { backgroundColor: '#d3d3d3' }]} >
-              <Image source={require("../assets/images/boardingimg3.jpeg")} style={[styles.imagePlaceholder, { backgroundColor: '#a9a9a9' }]} />
+              <View style={styles.imageWrapper}>
+                <Image source={require("../assets/images/boardingimg3.jpeg")} style={[styles.galleryImage, { width: imageWidth }]} />
               </View>
             </View>
-
-          
             
-              <Text style={styles.overlayText}>
-                {"\n\n"}From budget-friendly rooms to premium spaces BoardVista makes boarding simple, smart, and stress-free.
-              </Text>
-            
+            <View style={styles.quoteContainer}>
+               <Text style={styles.quoteText}>
+                 "From budget-friendly rooms to premium spaces, BoardVista makes boarding simple, smart, and stress-free."
+               </Text>
+            </View>
           </View>
 
-          
-          <Text style={styles.loginPrompt}>Click here! For login</Text>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={styles.button} onPress={UserLoginHandler}>
-              <Text style={styles.buttonText}>For Students /{"\n"}Academic Staff</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={OwnerloginHandler}>
-              <Text style={styles.buttonText}>For House{"\n"}Owners</Text>
-            </TouchableOpacity>
+          {/* === LOGIN SECTION === */}
+          <View style={styles.loginSection}>
+            <Text style={styles.sectionTitle}>Start Your Journey</Text>
+            <Text style={styles.sectionSubtitle}>Select your role to continue</Text>
+
+            <View style={styles.buttonGrid}>
+              {/* Student Button */}
+              <TouchableOpacity style={styles.roleCard} onPress={UserLoginHandler}>
+                <View style={styles.iconCircle}>
+                   <Text style={styles.iconText}>🎓</Text>
+                </View>
+                <Text style={styles.roleTitle}>Student / Staff</Text>
+                <Text style={styles.roleDesc}>Find your perfect place</Text>
+                <Text style={styles.arrowText}>→</Text>
+              </TouchableOpacity>
+
+              {/* Owner Button */}
+              <TouchableOpacity style={[styles.roleCard, styles.ownerCard]} onPress={OwnerloginHandler}>
+                 <View style={[styles.iconCircle, styles.ownerIconCircle]}>
+                   <Text style={styles.iconText}>🏠</Text>
+                </View>
+                <Text style={styles.roleTitle}>House Owner</Text>
+                <Text style={styles.roleDesc}>List your property</Text>
+                <Text style={styles.arrowText}>→</Text>
+              </TouchableOpacity>
+            </View>
             
-          </View>
-            <TouchableOpacity style={styles.linkButton} onPress={() => navigation.replace("RegistrationPage")}>
-              <Text style={styles.linkButtonText}>
-               Don't have an account? Register
+            <TouchableOpacity style={styles.registerLink} onPress={() => navigation.replace("RegistrationPage")}>
+              <Text style={styles.registerText}>
+                Don't have an account? <Text style={styles.registerHighlight}>Register Now</Text>
               </Text>
             </TouchableOpacity>
+          </View>
+
         </View>
 
-      
+        {/* === FOOTER === */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>© 2025 BoardVista</Text>
+          <Text style={styles.footerText}>© 2025 BoardVista • All Rights Reserved</Text>
         </View>
+
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-// === Styles ===
+// === MODERN STYLESHEET ===
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f0f0f0', // Matches main content background
+    backgroundColor: '#F8FAFC', // Slate 50 - Very light grey/white
   },
   scrollContainer: {
     flexGrow: 1,
   },
+  
   // --- Header ---
   header: {
-    backgroundColor: '#0a2d4d', // Dark blue
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-    alignItems: 'center',
+    backgroundColor: '#0F172A', // Slate 900 - Deep Navy
+    paddingTop: 60,
+    paddingBottom: 40,
+    paddingHorizontal: 24,
+    borderBottomLeftRadius: 30,
+    borderBottomRightRadius: 30,
+    position: 'relative',
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  decorativeCircle: {
+    position: 'absolute',
+    top: -50,
+    right: -50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+  },
+  headerContent: {
+    zIndex: 1,
   },
   headerLogo: {
     color: '#FFFFFF',
-    fontSize: 36,
-    fontWeight: 'bold',
+    fontSize: 32,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+  },
+  taglineContainer: {
+    marginTop: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 20,
   },
   headerTagline: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    marginTop: 4,
+    color: '#E2E8F0', // Slate 200
+    fontSize: 14,
+    fontWeight: '500',
   },
+
   // --- Main Content ---
   mainContent: {
-    backgroundColor: '#f0f0f0', // Light gray
-    alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 24,
+    marginTop: 20,
   },
-  welcomeText: {
-    color: '#888888',
-    fontSize: 16,
-    letterSpacing: 1,
+  welcomeSection: {
+    marginBottom: 20,
   },
-  mainLogo: {
-    color: '#333333',
-    fontSize: 38,
-    fontWeight: 'bold',
-    marginTop: -5, // Slight overlap like in the image
+  welcomeLabel: {
+    color: '#64748B', // Slate 500
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 5,
   },
-  mainTagline: {
-    color: '#333333',
-    fontSize: 18,
-    marginBottom: 25,
+  mainHeading: {
+    color: '#1E293B', // Slate 800
+    fontSize: 32,
+    fontWeight: '700',
+    lineHeight: 38,
   },
-  // --- Gallery & Overlay ---
-  galleryContainer: {
-    width: '100%',
-    position: 'relative', // Needed for the overlay
-    marginBottom: 25,
+
+  // --- Gallery Card ---
+  galleryCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 15,
+    marginBottom: 30,
+    
+    // Shadow
+    elevation: 4,
+    shadowColor: '#64748B',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
   },
   imageRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  imagePlaceholder: {
-    width: imageWidth,
-    height: 130,
-    borderRadius: 8,
-  },
-  /* // Style for your <Image> component
-  image: {
-    width: imageWidth,
-    height: 130,
-    borderRadius: 8,
-  },
-  */
-  textOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 10,
-    // Add a very subtle background if needed
-    // backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  overlayText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    textShadowColor: 'rgba(255, 255, 255, 0.7)',
-    textShadowOffset: { width: 1, height: 1 },
-    textShadowRadius: 2,
-  },
-  // --- Login ---
-  loginPrompt: {
-    fontSize: 20,
-    color: '#1d1869ff',
     marginBottom: 15,
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
+  imageWrapper: {
+    borderRadius: 12,
+    overflow: 'hidden',
+    // Little shadow for each image
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
   },
-  button: {
-    backgroundColor: '#295E8A', // A blue from the image
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 30, // Makes it pill-shaped
-    width: '45%',
-    alignItems: 'center',
+  galleryImage: {
+    height: 100,
+    resizeMode: 'cover',
+    backgroundColor: '#CBD5E1', // Placeholder color
   },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: 'bold',
+  quoteContainer: {
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 15,
+  },
+  quoteText: {
+    color: '#475569', // Slate 600
+    fontSize: 15,
+    fontStyle: 'italic',
     textAlign: 'center',
+    lineHeight: 22,
   },
+
+  // --- Login Section ---
+  loginSection: {
+    marginBottom: 30,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0b377cff',
+    marginBottom: 5,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    marginBottom: 20,
+  },
+  buttonGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  roleCard: {
+    backgroundColor: '#a8e6e0ff',
+    width: '48%',
+    borderRadius: 16,
+    padding: 16,
+    alignItems: 'flex-start',
+    // Shadow
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  ownerCard: {
+     // Optional visual distinction
+  },
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EFF6FF', // Light Blue
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  ownerIconCircle: {
+    backgroundColor: '#F0FDF4', // Light Green
+  },
+  iconText: {
+    fontSize: 20,
+  },
+  roleTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1e293bd2',
+    marginBottom: 4,
+  },
+  roleDesc: {
+    fontSize: 12,
+    color: '#94A3B8',
+    marginBottom: 10,
+  },
+  arrowText: {
+    fontSize: 18,
+    color: '#3B82F6',
+    fontWeight: 'bold',
+    alignSelf: 'flex-end',
+    marginTop: 'auto',
+  },
+
+  // --- Registration Link ---
+  registerLink: {
+    marginTop: 25,
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  registerText: {
+    color: '#64748B',
+    fontSize: 14,
+  },
+  registerHighlight: {
+    color: '#2563EB', // Brand Blue
+    fontWeight: '700',
+  },
+
   // --- Footer ---
   footer: {
-    backgroundColor: '#add8e6', // Light blue
-    padding: 20,
+    marginTop: 'auto',
+    padding: 24,
     alignItems: 'center',
-    marginTop: 'auto', // Pushes footer to bottom if content is short
+    backgroundColor: '#F1F5F9', // Slightly darker than background
   },
   footerText: {
-    color: '#000000', // Black text looks closer to image
-    fontSize: 14,
-  },
-  linkButtonText: {
-    color: '#007BFF',
-    fontSize: 14,
-  },
-  linkButton: {
-    marginTop: 20,
-    alignItems: 'center',
-    paddingBottom: 20,
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
-

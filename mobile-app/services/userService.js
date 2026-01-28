@@ -44,5 +44,16 @@ export const userService = {
       console.error('Error updating profile:', error);
       throw error;
     }
+  },
+
+  // Forgot password
+  forgotPassword: async (email) => {
+    try {
+      const response = await api.post('/users/forgot-password', { email });
+      return response.data;
+    } catch (error) {
+      console.error('Error sending forgot password email:', error);
+      throw error;
+    }
   }
 };

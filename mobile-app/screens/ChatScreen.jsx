@@ -5,12 +5,13 @@ import {
   FlatList,
   ImageBackground,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native'; // This imports from 'react-native'
+import { boardingService } from '../services/boardingService';
 
 // --- (Optional) Reusable Header ---
 // You can replace this with your existing AppHeader component
@@ -39,12 +40,13 @@ export default function ChatBotScreen() {
   const [messages, setMessages] = useState([
     {
       id: '1',
-      text: 'Hello! I am BoardVistaBot. How can I help you find a new boarding in Vavuniya today?',
+      text: 'Hello! I am BoardVistaBot. Please select a boarding house and choose what information you need:',
       sender: 'bot',
     },
   ]);
-  const [input, setInput] = useState('');
+  const [selectedBoarding, setSelectedBoarding] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [boardingList, setBoardingList] = useState([]);
   const flatListRef = useRef(null);
   const navigation = useNavigation();
 
@@ -54,6 +56,11 @@ export default function ChatBotScreen() {
   }
     
   
+  // Load boarding houses on component mount
+  useEffect(() => {
+    loadBoardingHouses();
+  }, []);
+
   // Automatically scroll to the bottom when new messages are added
   useEffect(() => {
     if (flatListRef.current) {
@@ -61,82 +68,113 @@ export default function ChatBotScreen() {
     }
   }, [messages]);
 
-  const systemPrompt = `
-    'BoardVistaBot', a friendly and helpful assistant for the BoardVista app.
-    Your main purpose is to help users (students, academic staff, and owners)
-    find or list boarding accommodations in Vavuniya.`;
+  const loadBoardingHouses = async () => {
+    try {
+      const allBoardings = await boardingService.getAllBoardings();
+      let boardingData = [];
+      
+      // Handle different response formats
+      if (Array.isArray(allBoardings)) {
+        boardingData = allBoardings;
+      } else if (allBoardings && allBoardings.boardingHouses) {
+        boardingData = allBoardings.boardingHouses;
+      } else if (allBoardings && allBoardings.data) {
+        boardingData = allBoardings.data;
+      } else if (allBoardings && allBoardings.data && allBoardings.data.data) {
+        boardingData = allBoardings.data.data;
+      }
+      
+      setBoardingList(boardingData);
+    } catch (error) {
+      console.error('Error loading boarding houses:', error);
+    }
+  };
 
   /**
-   * Calls the Gemini API to get a response
+   * Handles question selection with switch case
    */
-  const getBotResponse = async (userQuery) => {
-    setIsLoading(true);
-    const apiKey = ''; // As per instructions, leave this empty
-    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-
-    const payload = {
-      contents: [{ parts: [{ text: userQuery }] }],
-      systemInstruction: {
-        parts: [{ text: systemPrompt }],
-      },
-    };
-
-    try {
-      // Add exponential backoff retry logic
-      let response;
-      let retries = 0;
-      const maxRetries = 3;
-      let delay = 1000; // 1 second
-
-      while (retries < maxRetries) {
-        response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (response.ok) {
-          break; // Success
-        }
-
-        if (response.status === 429 || response.status >= 500) {
-          // Throttling or server error, retry
-          retries++;
-          await new Promise(resolve => setTimeout(resolve, delay));
-          delay *= 2; // Exponential backoff
-        } else {
-          // Other client-side error, don't retry
-          throw new Error(`API Error: ${response.statusText}`);
-        }
-      }
-
-      if (!response.ok) {
-        throw new Error(`API Error after ${maxRetries} retries: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-      const botText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (botText) {
-        const botMessage = {
-          id: Date.now().toString(),
-          text: botText,
-          sender: 'bot',
-        };
-        setMessages((prev) => [...prev, botMessage]);
-      } else {
-        throw new Error('No content in API response.');
-      }
-    } catch (error) {
-      // Do not log retry errors to console, but log the final error
-      if (!error.message.includes('retries')) {
-        console.error('Failed to fetch bot response:', error);
-      }
+  const handleQuestionSelect = async (questionType) => {
+    if (!selectedBoarding) {
       const errorMessage = {
         id: Date.now().toString(),
-        text: 'Sorry, I am having trouble connecting right now. Please try again later.',
+        text: 'Please select a boarding house first!',
+        sender: 'bot',
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      const foundBoarding = boardingList.find(boarding => 
+        boarding._id === selectedBoarding || boarding.title === selectedBoarding
+      );
+      
+      let response = '';
+      
+      if (!foundBoarding) {
+        response = `❌ **Boarding House Not Found**\n\nPlease contact the owner for more information:\n\n📞 **Phone:** +94 77 123 4567\n📧 **Email:** support@boardvista.lk`;
+      } else {
+        // Switch case for different question types
+        switch (questionType) {
+          case 'price':
+            response = `💰 **Price Information for ${foundBoarding.title}**\n\n` +
+                     `Monthly Rent: LKR ${foundBoarding.price?.monthly || 'N/A'}\n` +
+                     `Deposit: LKR ${foundBoarding.price?.deposit || 'N/A'}`;
+            break;
+            
+          case 'location':
+            response = `📍 **Location Information for ${foundBoarding.title}**\n\n` +
+                     `Address: ${foundBoarding.address || 'N/A'}\n` +
+                     `Coordinates: ${foundBoarding.coordinates ? 
+                       `Lat: ${foundBoarding.coordinates.latitude}, Lng: ${foundBoarding.coordinates.longitude}` : 
+                       'N/A'}`;
+            break;
+            
+          case 'occupants':
+            response = `👥 **Occupancy Information for ${foundBoarding.title}**\n\n` +
+                     `Gender: ${foundBoarding.gender ? foundBoarding.gender.charAt(0).toUpperCase() + foundBoarding.gender.slice(1) : 'N/A'}\n` +
+                     `Total Capacity: ${foundBoarding.totalCapacity || 'N/A'} people\n` +
+                     `Available Rooms: ${foundBoarding.availableRooms || 'N/A'}`;
+            break;
+            
+          case 'services':
+            const facilities = foundBoarding.facilities && foundBoarding.facilities.length > 0 ? 
+              foundBoarding.facilities.map(facility => `• ${facility}`).join('\n') : 'No facilities listed';
+            response = `🏠 **Services & Facilities for ${foundBoarding.title}**\n\n${facilities}`;
+            break;
+            
+          case 'contact':
+            response = `📞 **Contact Information for ${foundBoarding.title}**\n\n` +
+                     `Phone: ${foundBoarding.contact?.phone || 'N/A'}\n` +
+                     `Email: ${foundBoarding.contact?.email || 'N/A'}\n` +
+                     `Owner: ${foundBoarding.owner?.name || 'N/A'}`;
+            break;
+            
+          default:
+            // For any other question, return owner's contact
+            response = `❓ **Additional Information Required**\n\n` +
+                     `For this specific information, please contact the owner directly:\n\n` +
+                     `📞 **Phone:** ${foundBoarding.contact?.phone || '+94 77 123 4567'}\n` +
+                     `📧 **Email:** ${foundBoarding.contact?.email || 'support@boardvista.lk'}\n` +
+                     `👤 **Owner:** ${foundBoarding.owner?.name || 'Boarding Owner'}`;
+            break;
+        }
+      }
+      
+      const botMessage = {
+        id: Date.now().toString(),
+        text: response,
+        sender: 'bot',
+      };
+      setMessages((prev) => [...prev, botMessage]);
+      
+    } catch (error) {
+      console.error('Error in handleQuestionSelect:', error);
+      const errorMessage = {
+        id: Date.now().toString(),
+        text: `❌ **Error**\n\nSomething went wrong. Please contact the owner:\n\n📞 **Phone:** +94 77 123 4567\n📧 **Email:** support@boardvista.lk`,
         sender: 'bot',
       };
       setMessages((prev) => [...prev, errorMessage]);
@@ -146,29 +184,7 @@ export default function ChatBotScreen() {
   };
 
 
-  /**
-   * Handles sending a new message
-   */
-  const handleSend = () => {
-    const trimmedInput = input.trim();
-    if (trimmedInput.length === 0) return;
-
-    // 1. Create the user's message object
-    const userMessage = {
-      id: Date.now().toString(),
-      text: trimmedInput,
-      sender: 'user',
-    };
-
-    // 2. Add user's message to the list
-    setMessages((prev) => [...prev, userMessage]);
-
-    // 3. Clear the input
-    setInput('');
-
-    // 4. Get the bot's response
-    getBotResponse(trimmedInput);
-  };
+  // No handleSend function needed anymore - using button-based interaction
 
   
    // Renders a single chat bubble
@@ -222,26 +238,86 @@ export default function ChatBotScreen() {
       {isLoading && (
         <View style={styles.typingIndicator}>
           <ActivityIndicator size="small" color="#555" />
-          <Text style={styles.typingText}>BoardVistaBot is typing...</Text>
+          <Text style={styles.typingText}>Getting information...</Text>
         </View>
       )}
 
-      {/* --- Message Input --- */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.textInput}
-          value={input}
-          onChangeText={setInput}
-          placeholder="Type your message..."
-          placeholderTextColor="#999"
-          editable={!isLoading} // Disable input while bot is typing
-        />
-        <TouchableOpacity
-          style={[styles.sendButton, isLoading && styles.sendButtonDisabled]}
-          onPress={handleSend}
-          disabled={isLoading}>
-          <Text style={styles.sendButtonText}>[Send]</Text>
-        </TouchableOpacity>
+      {/* --- Boarding Selection --- */}
+      <View style={styles.selectionContainer}>
+        <Text style={styles.sectionTitle}>Select Boarding House:</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.boardingScroll}>
+          {boardingList.map((boarding) => (
+            <TouchableOpacity
+              key={boarding._id}
+              style={[
+                styles.boardingButton,
+                selectedBoarding === boarding._id && styles.selectedBoardingButton
+              ]}
+              onPress={() => setSelectedBoarding(boarding._id)}
+            >
+              <Text style={[
+                styles.boardingButtonText,
+                selectedBoarding === boarding._id && styles.selectedBoardingButtonText
+              ]}>
+                {boarding.title}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* --- Question Buttons --- */}
+      <View style={styles.questionsContainer}>
+        <Text style={styles.sectionTitle}>Select Information:</Text>
+        <View style={styles.questionButtonsGrid}>
+          <TouchableOpacity
+            style={styles.questionButton}
+            onPress={() => handleQuestionSelect('price')}
+            disabled={isLoading}
+          >
+            <Text style={styles.questionButtonText}>💰 Price</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.questionButton}
+            onPress={() => handleQuestionSelect('location')}
+            disabled={isLoading}
+          >
+            <Text style={styles.questionButtonText}>📍 Location</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.questionButton}
+            onPress={() => handleQuestionSelect('occupants')}
+            disabled={isLoading}
+          >
+            <Text style={styles.questionButtonText}>👥 Occupants</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.questionButton}
+            onPress={() => handleQuestionSelect('services')}
+            disabled={isLoading}
+          >
+            <Text style={styles.questionButtonText}>🏠 Services</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.questionButton}
+            onPress={() => handleQuestionSelect('contact')}
+            disabled={isLoading}
+          >
+            <Text style={styles.questionButtonText}>📞 Contact</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.questionButton}
+            onPress={() => handleQuestionSelect('other')}
+            disabled={isLoading}
+          >
+            <Text style={styles.questionButtonText}>❓ Other</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <AppFooter />
@@ -392,5 +468,68 @@ const styles = StyleSheet.create({
   footerText: {
     color: '#fff',
     fontSize: 14,
+  },
+  // Boarding Selection
+  selectionContainer: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 10,
+  },
+  boardingScroll: {
+    marginBottom: 10,
+  },
+  boardingButton: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 20,
+    marginRight: 10,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  selectedBoardingButton: {
+    backgroundColor: '#3a5a78',
+  },
+  boardingButtonText: {
+    fontSize: 14,
+    color: '#666',
+    fontWeight: '500',
+  },
+  selectedBoardingButtonText: {
+    color: '#fff',
+  },
+  // Question Buttons
+  questionsContainer: {
+    backgroundColor: '#fff',
+    padding: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  questionButtonsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  questionButton: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+    borderRadius: 12,
+    padding: 12,
+    width: '30%',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  questionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#495057',
   },
 });

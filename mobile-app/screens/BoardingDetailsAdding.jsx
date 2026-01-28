@@ -64,6 +64,10 @@ export default function AddListingScreen() {
     }
   }
   const skipHandler = () => { navigation.replace("Dashboard"); }
+  const goToEditScreen = () => { 
+    // For now, navigate without ID - the Edit screen will show a list of boardings to edit
+    navigation.navigate("EditOrUpdateBoarding"); 
+  }
 
   const [showMap, setShowMap] = useState(false);
   const [step, setStep] = useState(1);
@@ -77,8 +81,8 @@ export default function AddListingScreen() {
   const [formData, setFormData] = useState({
     name: '',
     address: '', // Manually typed text ONLY
-    latitude: 0, 
-    longitude: 0, 
+    latitude: 8.7641, // Default: University of Vavuniya latitude
+    longitude: 80.4977, // Default: University of Vavuniya longitude
     email: '',
     phone: '',
     capacity: '',
@@ -217,6 +221,10 @@ export default function AddListingScreen() {
         <Text style={styles.logo}>BOARDVISTA</Text>
         <Text style={styles.subtitle}>Discover the Best Stays in Vavuniya</Text>
         <View style={styles.userContainer}>
+          <TouchableOpacity onPress={goToEditScreen} style={styles.editButton}>
+            <Ionicons name="create-outline" size={20} color="#fff" />
+            <Text style={styles.headerIconText}>Edit</Text>
+          </TouchableOpacity>
           <Text style={styles.headerText}>Hi, Owner!</Text>
           <TouchableOpacity onPress={LogoutHandler}>
             <Text style={styles.headerIconText}>Exit</Text>
@@ -317,14 +325,21 @@ export default function AddListingScreen() {
           <View style={styles.locationInfo}>
             <Text style={styles.locationLabel}>Location Status:</Text>
             {/* Displaying Pin Status instead of Address */}
-            <Text style={[styles.addressText, { color: formData.latitude !== 0 ? 'green' : 'orange' }]}>
-              {formData.latitude !== 0 ? "✅ Location Pinned" : "⚠️ No Pin Dropped"}
+            <Text style={[
+              styles.addressText, 
+              { 
+                color: formData.latitude === 8.7641 && formData.longitude === 80.4977 ? 
+                  'orange' : 'green' 
+              }
+            ]}>
+              {formData.latitude === 8.7641 && formData.longitude === 80.4977 ? 
+                "🏛️ Default: University of Vavuniya" : 
+                "✅ Custom Location Selected"
+              }
             </Text>
-            {formData.latitude !== 0 && (
-               <Text style={styles.coordText}>
-                 GPS: {formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)}
-               </Text>
-            )}
+            <Text style={styles.coordText}>
+              GPS: {formData.latitude.toFixed(4)}, {formData.longitude.toFixed(4)}
+            </Text>
           </View>
 
           <TouchableOpacity 
@@ -333,10 +348,16 @@ export default function AddListingScreen() {
           >
             <Ionicons name="map" size={20} color="#fff" />
             <Text style={styles.mapButtonText}>
-              {formData.latitude !== 0 ? "Change Pin" : "Pick on Map"}
+              {formData.latitude === 8.7641 && formData.longitude === 80.4977 ? 
+                "Choose Location" : 
+                "Change Location"
+              }
             </Text>
           </TouchableOpacity>
         </View>
+        <Text style={styles.helperText}>
+          💡 Tap "Choose Location" to pick precise location on map, or use default University location
+        </Text>
       </View>
 
       <FormInputMulti
@@ -431,6 +452,7 @@ const styles = StyleSheet.create({
   logo: { fontSize: 40, fontWeight: 'bold', color: '#fff' },
   subtitle: { fontSize: 16, color: '#fff', marginTop: 5 },
   userContainer: { position: 'absolute', top: 15, right: 15, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', paddingVertical: 5, paddingHorizontal: 10, borderRadius: 20 },
+  editButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', paddingVertical: 5, paddingHorizontal: 8, borderRadius: 15, marginRight: 8 },
   headerText: { color: '#fff', marginHorizontal: 8, fontSize: 14 },
   headerIconText: { color: '#fff', fontSize: 16 },
   subHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 15, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#ddd' },

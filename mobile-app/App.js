@@ -6,6 +6,7 @@ import index from "./app/index";
 import BoardingDetailsAdding from "./screens/BoardingDetailsAdding";
 import ChatScreen from "./screens/ChatScreen";
 import Dashboard from "./screens/Dashboard";
+import EditOrUpdateBoarding from "./screens/EditOrUpdateBoarding";
 import HomePage from "./screens/HomePage";
 import OwnerLoginPage from "./screens/OwnerLoginPage";
 import RegistrationPage from "./screens/RegistrationPage";
@@ -29,6 +30,7 @@ const linking = {
       Dashboard: 'dashboard',
       ChatScreen: 'chat',
       ReviewPage: 'review',
+      EditOrUpdateBoarding: 'edit-boarding',
     },
   },
 };
@@ -49,6 +51,7 @@ export default function App() {
         <Stack.Screen name="Dashboard" component={Dashboard} options={{ title: "Dashboard",headerShown: false }} />
         <Stack.Screen name="ChatScreen" component={ChatScreen} options={{ title: "ChatScreen" ,headerShown: false}} />
         <Stack.Screen name="ReviewPage" component={ReviewPage} options={{ title: "ReviewPage" ,headerShown: false}} />
+        <Stack.Screen name="EditOrUpdateBoarding" component={EditOrUpdateBoarding} options={{ title: "EditOrUpdateBoarding" ,headerShown: false}} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -6,6 +6,7 @@ import {
   Alert,
   Dimensions,
   Image,
+  Modal,
   Platform,
   SafeAreaView,
   ScrollView,
@@ -14,7 +15,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { boardingService } from '../services/boardingService';
 
@@ -70,6 +71,8 @@ export default function BoardVistaDashboard() {
   const [boardingData, setBoardingData] = useState<BoardingPlace[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showPriceFilter, setShowPriceFilter] = useState(false);
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 50000 });
   const navigation = useNavigation();
 
   // Ref for smooth scrolling
@@ -121,10 +124,22 @@ export default function BoardVistaDashboard() {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
-
-
   const handleLogout = () => {
     navigation.navigate("HomePage");
+  };
+
+  const handleFilter = () => {
+    setShowPriceFilter(true);
+  };
+
+  const applyPriceFilter = (min: number, max: number) => {
+    setPriceRange({ min, max });
+    setShowPriceFilter(false);
+  };
+
+  const clearPriceFilter = () => {
+    setPriceRange({ min: 0, max: 50000 });
+    setShowPriceFilter(false);
   };
 
   // --- Components ---
@@ -132,18 +147,19 @@ export default function BoardVistaDashboard() {
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       <View>
-        <Text style={styles.appTitle}>BoardVista</Text>
+        <Text style={styles.appTitle}>BOARDVISTA</Text>
         <View style={styles.locationPill}>
-          <Ionicons name="location-sharp" size={16} color="#444" />
+          <Ionicons name="location-sharp" size={12} color="#2563EB" />
           <Text style={styles.locationText}>Vavuniya, SL</Text>
         </View>
       </View>
       <View style={styles.headerIcons}>
         <TouchableOpacity style={styles.iconButton} onPress={() => handleLogout()}>
-          <Ionicons name="log-out-outline" size={24} color="#000" />
+          <Ionicons name="log-out-outline" size={20} color="#1E293B" />
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconButton}>
-          <Ionicons name="notifications-outline" size={24} color="#000" />
+          <Ionicons name="notifications-outline" size={20} color="#1E293B" />
+          <View style={styles.notificationDot} />
         </TouchableOpacity>
       </View>
     </View>
@@ -151,21 +167,24 @@ export default function BoardVistaDashboard() {
 
   const renderSearchBar = () => (
     <View style={styles.searchContainer}>
-      <Feather name="search" size={20} color="#666" style={styles.searchIcon} />
-      <TextInput
-        style={styles.searchInput}
-        placeholder="Search boarding places..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-      <TouchableOpacity style={styles.filterButton}>
-        <Ionicons name="options-outline" size={20} color="#000" />
+      <View style={styles.searchWrapper}>
+        <Feather name="search" size={18} color="#94A3B8" style={styles.searchIcon} />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search locations..."
+          placeholderTextColor="#94A3B8"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+      <TouchableOpacity style={styles.filterButton } onPress={handleFilter}>
+        <Ionicons name="options-outline" size={20} color="#fff" />
       </TouchableOpacity>
     </View>
   );
 
   const renderCategories = () => (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList}>
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList} contentContainerStyle={{paddingHorizontal: 20}}>
       {CATEGORIES.map((cat, index) => (
         <TouchableOpacity
           key={index}
@@ -193,7 +212,6 @@ export default function BoardVistaDashboard() {
       activeOpacity={0.9}
       onPress={() => {
         console.log('Navigating to UserDashboard with boardingId:', item._id);
-        // Use React Navigation with params
         navigation.navigate("UserDashboard", { boardingId: item._id });
       }}
     >
@@ -205,37 +223,150 @@ export default function BoardVistaDashboard() {
           style={styles.cardImage}
         />
         <View style={styles.priceTag}>
-          <Text style={styles.priceText}>LKR {item.price.monthly}/mo</Text>
+          <Text style={styles.priceText}>LKR {item.price.monthly}</Text>
+          <Text style={styles.priceSubText}>/mo</Text>
         </View>
         {item.isVerified && (
           <View style={styles.verifiedBadge}>
-            <MaterialIcons name="verified" size={16} color="#4285F4" />
+            <MaterialIcons name="verified" size={14} color="#2563EB" />
+            <Text style={styles.verifiedText}>Verified</Text>
           </View>
         )}
       </View>
       <View style={styles.cardContent}>
-        <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+        <View style={styles.titleRow}>
+             <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+             <View style={styles.ratingContainer}>
+                 <Ionicons name="star" size={10} color="#F59E0B" />
+                 <Text style={styles.ratingText}>4.5</Text>
+             </View>
+        </View>
+        
         <View style={styles.cardLocation}>
-          <Ionicons name="location-outline" size={14} color="#888" />
+          <Ionicons name="location-outline" size={12} color="#64748B" />
           <Text style={styles.cardLocationText} numberOfLines={1}>
             {item.address}
           </Text>
+        </View>
+        
+        <View style={styles.facilitiesRow}>
+             <Text style={styles.facilityText}>
+                 {item.gender === 'male' ? '♂ Male' : item.gender === 'female' ? '♀ Female' : '⚥ Mixed'}
+             </Text>
+             <Text style={styles.dotSeparator}>•</Text>
+             <Text style={styles.facilityText}>
+                {item.roomTypes?.[0]?.capacity || 'N/A'} ppl
+             </Text>
         </View>
       </View>
     </TouchableOpacity>
   );
 
-  // Filter boarding data based on category and search
+  // Price Filter Modal Component
+  const renderPriceFilterModal = () => (
+    <Modal
+      visible={showPriceFilter}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setShowPriceFilter(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Price Range Filter</Text>
+            <TouchableOpacity onPress={() => setShowPriceFilter(false)}>
+              <Ionicons name="close" size={24} color="#64748B" />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.modalContent}>
+            <Text style={styles.priceLabel}>Minimum Price (LKR)</Text>
+            <View style={styles.priceInputContainer}>
+              <TouchableOpacity 
+                style={styles.priceButton}
+                onPress={() => setPriceRange({...priceRange, min: Math.max(0, priceRange.min - 5000)})}
+              >
+                <Ionicons name="remove" size={20} color="#2563EB" />
+              </TouchableOpacity>
+              <Text style={styles.priceValue}>{priceRange.min.toLocaleString()}</Text>
+              <TouchableOpacity 
+                style={styles.priceButton}
+                onPress={() => setPriceRange({...priceRange, min: Math.min(priceRange.max - 1000, priceRange.min + 5000)})}
+              >
+                <Ionicons name="add" size={20} color="#2563EB" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.priceLabel, {marginTop: 20}]}>Maximum Price (LKR)</Text>
+            <View style={styles.priceInputContainer}>
+              <TouchableOpacity 
+                style={styles.priceButton}
+                onPress={() => setPriceRange({...priceRange, max: Math.max(priceRange.min + 1000, priceRange.max - 5000)})}
+              >
+                <Ionicons name="remove" size={20} color="#2563EB" />
+              </TouchableOpacity>
+              <Text style={styles.priceValue}>{priceRange.max.toLocaleString()}</Text>
+              <TouchableOpacity 
+                style={styles.priceButton}
+                onPress={() => setPriceRange({...priceRange, max: Math.min(100000, priceRange.max + 5000)})}
+              >
+                <Ionicons name="add" size={20} color="#2563EB" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.quickSelectContainer}>
+              <Text style={styles.quickSelectLabel}>Quick Select:</Text>
+              <View style={styles.quickSelectButtons}>
+                {[
+                  { label: 'Under 10k', max: 10000 },
+                  { label: '10k-20k', min: 10000, max: 20000 },
+                  { label: '20k-30k', min: 20000, max: 30000 },
+                  { label: '30k+', min: 30000, max: 50000 }
+                ].map((range, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.quickSelectButton}
+                    onPress={() => applyPriceFilter(range.min || 0, range.max)}
+                  >
+                    <Text style={styles.quickSelectText}>{range.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.modalActions}>
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.clearButton]}
+              onPress={clearPriceFilter}
+            >
+              <Text style={styles.clearButtonText}>Clear</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.modalButton, styles.applyButton]}
+              onPress={() => setShowPriceFilter(false)}
+            >
+              <Text style={styles.applyButtonText}>Apply</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Filter boarding data based on category, search, and price
   const filteredBoardingData = boardingData.filter(item => {
     const matchesCategory = selectedCategory === 'All' || item.gender === selectedCategory.toLowerCase();
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           item.address.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const matchesPrice = item.price.monthly >= priceRange.min && item.price.monthly <= priceRange.max;
+    
+    return matchesCategory && matchesSearch && matchesPrice;
   });
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#d61010ff" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
 
       <ScrollView
         ref={scrollViewRef}
@@ -245,7 +376,9 @@ export default function BoardVistaDashboard() {
         {/* Top Section */}
         {renderHeader()}
 
-        <Text style={styles.heroTitle}>Discover{'\n'}Your New Boarding</Text>
+        <View style={styles.heroContainer}>
+            <Text style={styles.heroTitle}>Find your perfect{'\n'}student home</Text>
+        </View>
 
         {renderSearchBar()}
         {renderCategories()}
@@ -253,8 +386,8 @@ export default function BoardVistaDashboard() {
         {/* Loading State */}
         {loading && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color="#2A7FFF" />
-            <Text style={styles.loadingText}>Loading boarding places...</Text>
+            <ActivityIndicator size="large" color="#2563EB" />
+            <Text style={styles.loadingText}>Finding best stays...</Text>
           </View>
         )}
 
@@ -273,15 +406,17 @@ export default function BoardVistaDashboard() {
           <>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
-                Nearby Boarding Places ({filteredBoardingData.length})
+                Nearby Places <Text style={styles.countText}>({filteredBoardingData.length})</Text>
               </Text>
             </View>
 
             {filteredBoardingData.length === 0 ? (
               <View style={styles.emptyContainer}>
-                <Ionicons name="search-outline" size={48} color="#ccc" />
-                <Text style={styles.emptyText}>No boarding places found</Text>
-                <Text style={styles.emptySubText}>Try adjusting your filters</Text>
+                <View style={styles.emptyIconBg}>
+                    <Ionicons name="search" size={32} color="#94A3B8" />
+                </View>
+                <Text style={styles.emptyText}>No results found</Text>
+                <Text style={styles.emptySubText}>Try changing your filters or search term</Text>
               </View>
             ) : (
               <View style={styles.gridContainer}>
@@ -297,21 +432,23 @@ export default function BoardVistaDashboard() {
 
           <Text style={styles.bottomHeader}>About BoardVista</Text>
           <Text style={styles.bottomText}>
-            BoardVista is dedicated to helping University of Vavuniya students find safe, affordable, and verified boarding places.
+            The trusted platform for University of Vavuniya students to find safe, affordable, and verified accommodations.
           </Text>
 
-          <Text style={styles.bottomHeader}>Contact Us</Text>
-          <View style={styles.contactRow}>
-            <Ionicons name="call-outline" size={20} color="#555" />
-            <Text style={styles.contactText}>+94 77 123 4567</Text>
-          </View>
-          <View style={styles.contactRow}>
-            <Ionicons name="mail-outline" size={20} color="#555" />
-            <Text style={styles.contactText}>support@boardvista.lk</Text>
-          </View>
-          <View style={styles.contactRow}>
-            <Ionicons name="location-outline" size={20} color="#555" />
-            <Text style={styles.contactText}>Faculty of Applied Science, Vavuniya</Text>
+          <Text style={styles.bottomHeader}>Contact Support</Text>
+          <View style={styles.contactCard}>
+              <View style={styles.contactRow}>
+                <View style={styles.contactIcon}>
+                    <Ionicons name="call" size={16} color="#2563EB" />
+                </View>
+                <Text style={styles.contactText}>+94 77 123 4567</Text>
+              </View>
+              <View style={styles.contactRow}>
+                <View style={styles.contactIcon}>
+                    <Ionicons name="mail" size={16} color="#2563EB" />
+                </View>
+                <Text style={styles.contactText}>support@boardvista.lk</Text>
+              </View>
           </View>
           
           {/* Spacer for Floating Nav Visibility */}
@@ -319,25 +456,26 @@ export default function BoardVistaDashboard() {
         </View>
       </ScrollView>
 
+      {/* Price Filter Modal */}
+      {renderPriceFilterModal()}
+
       {/* --- Floating Navigation Bar --- */}
       <View style={styles.floatingNavContainer}>
         <View style={styles.floatingNav}>
           <TouchableOpacity style={styles.navItem} onPress={handleScrollToTop}>
             <View style={[styles.navIconWrapper, styles.activeNavWrapper]}>
-              <Ionicons name="home" size={24} color="#fff" />
+              <Ionicons name="home" size={20} color="#fff" />
             </View>
             <Text style={styles.navLabelActive}>Home</Text>
           </TouchableOpacity>
 
-          
-
           <TouchableOpacity style={styles.navItem} onPress={handleScrollToBottom}>
-            <Ionicons name="people-outline" size={24} color="#888" />
+            <Ionicons name="people-outline" size={24} color="#64748B" />
             <Text style={styles.navLabel}>Contact</Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.navItem} onPress={handleScrollToBottom}>
-            <Ionicons name="information-circle-outline" size={24} color="#888" />
+            <Ionicons name="information-circle-outline" size={24} color="#64748B" />
             <Text style={styles.navLabel}>About</Text>
           </TouchableOpacity>
         </View>
@@ -347,112 +485,139 @@ export default function BoardVistaDashboard() {
   );
 }
 
+// --- MODERN STYLESHEET ---
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#a8ccddff',
+    backgroundColor: '#F8FAFC', // Slate 50
   },
   scrollContent: {
     paddingBottom: 20,
   },
+  
+  // Header
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'android' ? 40 : 10,
-    marginBottom: 20,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'android' ? 20 : 10,
+    marginBottom: 10,
   },
   appTitle: {
     fontSize: 20,
-    fontWeight: '800',
-    color: '#1A1A1A',
-    letterSpacing: 0.5,
+    fontWeight: '900',
+    color: '#0F172A', // Navy
+    letterSpacing: 1,
   },
   locationPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F0F0F0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    marginTop: 4,
-    alignSelf: 'flex-start',
+    marginTop: 2,
   },
   locationText: {
     fontSize: 12,
-    color: '#444',
+    color: '#64748B', // Slate 500
     marginLeft: 4,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   iconButton: {
-    padding: 8,
+    width: 40,
+    height: 40,
     backgroundColor: '#fff',
-    borderRadius: 50,
-    marginRight: 10,
-    elevation: 2,
-    shadowColor: '#000',
+    borderRadius: 20,
+    marginLeft: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    // Shadow
+    shadowColor: '#64748B',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    borderWidth: 2,
+  notificationDot: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#EF4444', // Red
+    borderWidth: 1,
     borderColor: '#fff',
+  },
+  
+  // Hero
+  heroContainer: {
+    paddingHorizontal: 24,
+    marginBottom: 20,
   },
   heroTitle: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-    lineHeight: 36,
+    fontWeight: '800',
+    color: '#1E293B',
+    lineHeight: 34,
   },
+
+  // Search
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
+    paddingHorizontal: 24,
     marginBottom: 20,
   },
-  searchInput: {
+  searchWrapper: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#fff',
     height: 50,
-    borderRadius: 16,
-    paddingLeft: 45,
-    paddingRight: 15,
-    fontSize: 15,
-    elevation: 2,
-    shadowColor: '#000',
+    borderRadius: 14,
+    paddingHorizontal: 15,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    // Shadow
+    shadowColor: '#64748B',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 5,
-    color: '#333',
+    elevation: 1,
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 14,
+    color: '#1E293B',
   },
   searchIcon: {
-    position: 'absolute',
-    left: 15,
-    zIndex: 1,
+    opacity: 0.7,
   },
   filterButton: {
     width: 50,
     height: 50,
-    backgroundColor: '#1A1A1A', // Dark theme for contrast
-    borderRadius: 16,
+    backgroundColor: '#2563EB', // Royal Blue
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 12,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
   },
+
+  // Categories
   categoryList: {
-    paddingHorizontal: 20,
     marginBottom: 25,
+    paddingLeft: 4, // Offset for padding inside scrollView
   },
   categoryChip: {
     paddingHorizontal: 20,
@@ -461,48 +626,60 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginRight: 10,
     borderWidth: 1,
-    borderColor: '#EFEFEF',
+    borderColor: '#E2E8F0',
   },
   categoryChipActive: {
-    backgroundColor: '#1A1A1A',
-    borderColor: '#1A1A1A',
+    backgroundColor: '#0F172A', // Navy
+    borderColor: '#0F172A',
   },
   categoryText: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '600',
   },
   categoryTextActive: {
     color: '#fff',
   },
+
+  // Section Header
   sectionHeader: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     marginBottom: 15,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#333',
+    color: '#1E293B',
   },
+  countText: {
+      color: '#94A3B8',
+      fontSize: 14,
+      fontWeight: '500',
+  },
+
+  // Cards
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
   },
   card: {
     width: CARD_WIDTH,
     backgroundColor: '#fff',
     borderRadius: 20,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    // Modern shadow
+    shadowColor: '#64748B',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   imageContainer: {
-    height: 140,
+    height: 130,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     overflow: 'hidden',
@@ -514,149 +691,219 @@ const styles = StyleSheet.create({
   },
   priceTag: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    bottom: 8,
+    right: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.8)', // Navy transparent
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'baseline',
   },
   priceText: {
     color: '#fff',
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
+  },
+  priceSubText: {
+    color: '#E2E8F0',
+    fontSize: 10,
   },
   verifiedBadge: {
     position: 'absolute',
-    top: 10,
-    left: 10,
+    top: 8,
+    left: 8,
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 2,
+    borderRadius: 12,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  verifiedText: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: '#0F172A',
+      marginLeft: 2,
   },
   cardContent: {
     padding: 12,
   },
-  ratingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  ratingText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#333',
-    marginLeft: 4,
-  },
-  reviewCountText: {
-    fontSize: 10,
-    color: '#888',
-    marginLeft: 2,
+  titleRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 6,
   },
   cardTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 4,
+    color: '#1E293B',
+    flex: 1,
+    marginRight: 4,
+  },
+  ratingContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: '#FFFBEB', // Light yellow
+      paddingHorizontal: 4,
+      paddingVertical: 2,
+      borderRadius: 4,
+  },
+  ratingText: {
+      fontSize: 10,
+      fontWeight: '700',
+      color: '#B45309',
+      marginLeft: 2,
   },
   cardLocation: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 8,
   },
   cardLocationText: {
     fontSize: 11,
-    color: '#888',
+    color: '#64748B',
     marginLeft: 4,
-  },
-  // Loading and Error States
-  loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  },
+  facilitiesRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+  },
+  facilityText: {
+      fontSize: 11,
+      color: '#94A3B8',
+      fontWeight: '500',
+  },
+  dotSeparator: {
+      marginHorizontal: 6,
+      color: '#CBD5E1',
+      fontSize: 10,
+  },
+
+  // States
+  loadingContainer: {
     paddingVertical: 40,
+    alignItems: 'center',
   },
   loadingText: {
     marginTop: 10,
-    fontSize: 16,
-    color: '#666',
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
   },
   errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    padding: 24,
     alignItems: 'center',
-    paddingVertical: 40,
   },
   errorText: {
-    fontSize: 16,
-    color: '#FF4444',
+    fontSize: 14,
+    color: '#EF4444',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
   },
   retryButton: {
-    backgroundColor: '#2A7FFF',
+    backgroundColor: '#2563EB',
     paddingHorizontal: 20,
     paddingVertical: 10,
-    borderRadius: 8,
+    borderRadius: 20,
   },
   retryButtonText: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: '600',
+    fontSize: 13,
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyIconBg: {
+      width: 60,
+      height: 60,
+      borderRadius: 30,
+      backgroundColor: '#F1F5F9',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: 12,
   },
   emptyText: {
-    fontSize: 18,
-    color: '#666',
-    marginTop: 10,
+    fontSize: 16,
+    color: '#1E293B',
+    fontWeight: '700',
   },
   emptySubText: {
-    fontSize: 14,
-    color: '#999',
-    marginTop: 5,
+    fontSize: 13,
+    color: '#94A3B8',
+    marginTop: 4,
   },
-  // --- Bottom Section Styles ---
+
+  // Bottom Section
   bottomSection: {
-    padding: 25,
+    padding: 24,
     backgroundColor: '#fff',
     marginTop: 20,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 5,
   },
   divider: {
     width: 40,
     height: 4,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#E2E8F0',
     alignSelf: 'center',
     borderRadius: 2,
     marginBottom: 20,
   },
   bottomHeader: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#1A1A1A',
-    marginTop: 20,
-    marginBottom: 10,
+    color: '#0F172A',
+    marginTop: 10,
+    marginBottom: 8,
   },
   bottomText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 22,
+    fontSize: 13,
+    color: '#64748B',
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  contactCard: {
+      backgroundColor: '#F8FAFC',
+      padding: 16,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: '#F1F5F9',
   },
   contactRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
   },
-  contactText: {
-    marginLeft: 10,
-    fontSize: 14,
-    color: '#555',
+  contactIcon: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      backgroundColor: '#DBEAFE', // Light Blue
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 10,
   },
-  // --- Floating Nav Styles ---
+  contactText: {
+    fontSize: 13,
+    color: '#334155',
+    fontWeight: '500',
+  },
+
+  // Floating Nav
   floatingNavContainer: {
     position: 'absolute',
     bottom: 30,
@@ -668,41 +915,182 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#fff',
     width: width * 0.85,
-    height: 70,
-    borderRadius: 35,
+    height: 64,
+    borderRadius: 32,
     justifyContent: 'space-around',
     alignItems: 'center',
-    shadowColor: '#000',
+    // Heavy Shadow
+    shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 8,
     paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.5)',
   },
   navItem: {
     alignItems: 'center',
     justifyContent: 'center',
+    width: 60,
   },
   navIconWrapper: {
-    width: 45,
-    height: 45,
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 25,
+    borderRadius: 20,
   },
   activeNavWrapper: {
-    backgroundColor: '#2A7FFF', // Bright blue for active state
-    marginBottom: 4,
+    backgroundColor: '#2563EB', // Royal Blue
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   navLabel: {
     fontSize: 10,
-    color: '#888',
+    color: '#64748B',
     marginTop: 4,
+    fontWeight: '500',
   },
   navLabelActive: {
     fontSize: 10,
-    color: '#2A7FFF',
+    color: '#2563EB',
     fontWeight: '700',
-    display: 'none', // Hide text for active item if you prefer just the icon
+    marginTop: 4,
+    display: 'none', 
+  },
+
+  // Price Filter Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    width: '90%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  modalContent: {
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+  },
+  priceLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 12,
+  },
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  priceButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  priceValue: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1E293B',
+    minWidth: 80,
+    textAlign: 'center',
+  },
+  quickSelectContainer: {
+    marginTop: 24,
+  },
+  quickSelectLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#334155',
+    marginBottom: 12,
+  },
+  quickSelectButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  quickSelectButton: {
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  quickSelectText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  modalActions: {
+    flexDirection: 'row',
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    gap: 12,
+  },
+  modalButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  clearButton: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  clearButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  applyButton: {
+    backgroundColor: '#2563EB',
+  },
+  applyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

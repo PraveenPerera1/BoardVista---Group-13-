@@ -2,15 +2,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import {
-    Alert,
-    Pressable,
-    SafeAreaView,
-    StatusBar,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ImageBackground,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
 // Import the icon library
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -148,60 +150,85 @@ const OwnerLoginPage = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      {/* Set status bar text to light for the dark header */}
-      <StatusBar barStyle="light-content" />
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="light-content" backgroundColor="#0F172A" />
+      
+      <ScrollView 
+        style={styles.container} 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        
+        {/* === HEADER === */}
+        <ImageBackground
+          source={ require("../assets/images/background.jpg") } // Placeholder
+          style={styles.headerBackground}
+          imageStyle={styles.headerImage}
+        >
+          <View style={styles.headerOverlay}>
+            <Text style={styles.headerWelcome}>WELCOME BACK</Text>
+            <Text style={styles.headerTitle}>BOARDVISTA</Text>
+            <Text style={styles.headerSubtitle}>Manage your property with ease</Text>
+          </View>
+        </ImageBackground>
 
-      {/* Header Section */}
-      <View style={styles.header}>
-        <Text style={styles.headerWelcome}>WELCOME TO</Text>
-        <Text style={styles.headerTitle}>BOARDVISTA</Text>
-        <Text style={styles.headerSubtitle}>Discover the Best Stays in Vavuniya</Text>
-      </View>
+        {/* === MAIN CONTENT === */}
+        <View style={styles.formCard}>
+          
+          {/* Back Button */}
+          <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
+            <Icon name="arrow-back" size={20} color="#475569" />
+            <Text style={styles.backText}>Back</Text>
+          </TouchableOpacity>
 
-      {/* Form Area Section */}
-      <View style={styles.formArea}>
-        {/* Back Button */}
-        <TouchableOpacity style={styles.backButton} onPress={handleGoBack}>
-          <Icon name="arrow-back" size={28} color="#333" />
-        </TouchableOpacity>
-
-        {/* Form Content */}
-        <View style={styles.formContent}>
-          <Text style={styles.title}>Login as a House Owner</Text>
-          {/* Removed the "(Student or Academic Staff)" subtitle */}
+          <View style={styles.headerTextContainer}>
+             <Text style={styles.title}>Owner Login</Text>
+             <Text style={styles.subtitle}>Sign in to access your dashboard</Text>
+          </View>
 
           {/* Email Input */}
-          <TextInput
-            style={styles.input}
-            placeholder="abc@gmail.com"
-            placeholderTextColor="#888"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            value={email}
-            onChangeText={setEmail}
-          />
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Email Address</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="name@example.com"
+              placeholderTextColor="#94A3B8"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
 
           {/* Password Input */}
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.passwordInput}
-              placeholder="password"
-              placeholderTextColor="#888"
-              secureTextEntry={!isPasswordVisible}
-              value={password}
-              onChangeText={setPassword}
-            />
-            {/* Toggle Visibility Icon */}
-            <Pressable onPress={() => setIsPasswordVisible(!isPasswordVisible)}>
-              <Icon
-                name={isPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
-                size={24}
-                color="#555"
-                style={styles.eyeIcon}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Password</Text>
+            <View style={styles.passwordContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Enter your password"
+                placeholderTextColor="#94A3B8"
+                secureTextEntry={!isPasswordVisible}
+                value={password}
+                onChangeText={setPassword}
               />
-            </Pressable>
+              <Pressable 
+                onPress={() => setIsPasswordVisible(!isPasswordVisible)}
+                style={styles.eyeIcon}
+              >
+                <Icon
+                  name={isPasswordVisible ? 'eye-outline' : 'eye-off-outline'}
+                  size={20}
+                  color="#64748B"
+                />
+              </Pressable>
+            </View>
           </View>
+
+          {/* Forgot Password Link */}
+          <TouchableOpacity onPress={handleForgotPassword} style={styles.forgotPasswordContainer}>
+            <Text style={styles.forgotPasswordText}>Forgot password?</Text>
+          </TouchableOpacity>
 
           {/* Login Button */}
           <TouchableOpacity 
@@ -210,144 +237,210 @@ const OwnerLoginPage = () => {
             disabled={loading}
           >
             <Text style={styles.loginButtonText}>
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? 'Signing In...' : 'Sign In'}
             </Text>
           </TouchableOpacity>
 
-          {/* Forgot Password */}
-          <TouchableOpacity onPress={handleForgotPassword}>
-            <Text style={styles.forgotPasswordText}>Forgot password</Text>
-          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Footer Section */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2025 BoardVista</Text>
-      </View>
+        {/* === FOOTER === */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>© 2025 BoardVista • All Rights Reserved</Text>
+        </View>
+
+      </ScrollView>
     </SafeAreaView>
   );
 };
 
-// Stylesheet
+// === MODERN STYLESHEET ===
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#F8FAFC', // Slate 50
+  },
   container: {
     flex: 1,
-    backgroundColor: '#EAEAEA', // Main light-gray background
   },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 20,
+  },
+  
   // Header
-  header: {
-    backgroundColor: '#000033', // Dark navy blue
-    paddingVertical: 30,
-    paddingHorizontal: 20,
-    alignItems: 'center',
+  headerBackground: {
+    width: '100%',
+    height: 260,
     justifyContent: 'center',
+    marginBottom: -50, // Pull card up into header
+    zIndex: 0,
+  },
+  headerImage: {
+    opacity: 0.8,
+  },
+  headerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.85)', // Dark Slate Overlay
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    paddingBottom: 60,
   },
   headerWelcome: {
-    color: '#FFF',
-    fontSize: 16,
-    opacity: 0.9,
+    color: '#94A3B8', // Slate 400
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginBottom: 8,
+    textTransform: 'uppercase',
   },
   headerTitle: {
-    color: '#FFF',
     fontSize: 36,
-    fontWeight: 'bold',
-    letterSpacing: 1,
+    fontWeight: '800',
+    color: '#fff',
+    letterSpacing: 1.5,
   },
   headerSubtitle: {
-    color: '#FFF',
-    fontSize: 16,
-    opacity: 0.9,
-    marginTop: 4,
+    fontSize: 14,
+    color: '#E2E8F0',
+    marginTop: 6,
+    fontWeight: '500',
   },
-  // Form
-  formArea: {
-    flex: 1, // Takes up the remaining space
-    backgroundColor: '#EAEAEA', // Light gray background
-    position: 'relative', // Needed for absolute positioning of back button
+
+  // Form Card
+  formCard: {
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    marginHorizontal: 16,
+    padding: 24,
+    // Soft Shadow
+    shadowColor: '#64748B',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+    marginBottom: 20,
   },
+  
+  // Back Button
   backButton: {
-    position: 'absolute',
-    top: 20,
-    left: 20,
-    zIndex: 1, // Make sure it's clickable
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    backgroundColor: '#F1F5F9',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    marginBottom: 20,
   },
-  formContent: {
-    padding: 30,
-    marginTop: 40, // Give space for the back button
+  backText: {
+    marginLeft: 4,
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+
+  // Titles
+  headerTextContainer: {
+    marginBottom: 24,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: 32, // Adjusted margin since subtitle is removed
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#1E293B', // Slate 800
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#64748B', // Slate 500
+  },
+
+  // Inputs
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155', // Slate 700
+    marginBottom: 8,
+    marginLeft: 4,
   },
   input: {
-    backgroundColor: '#FFF',
-    borderRadius: 8,
+    backgroundColor: '#F8FAFC', // Very light grey
+    borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
-    marginBottom: 16,
+    fontSize: 15,
+    color: '#1E293B',
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: '#E2E8F0',
   },
-  // Password Input Row
+  
+  // Password Specific
   passwordContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
-    borderRadius: 8,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#DDD',
-    marginBottom: 24,
+    borderColor: '#E2E8F0',
   },
   passwordInput: {
     flex: 1,
     paddingHorizontal: 16,
     paddingVertical: 14,
-    fontSize: 16,
+    fontSize: 15,
+    color: '#1E293B',
   },
   eyeIcon: {
     padding: 14,
   },
-  // Buttons
-  loginButton: {
-    backgroundColor: '#FFF',
-    paddingVertical: 16,
-    borderRadius: 30, // Pill shape
-    alignItems: 'center',
-    marginBottom: 20,
-    // Shadow for depth
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  loginButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
+
+  // Actions
+  forgotPasswordContainer: {
+    alignSelf: 'flex-end',
+    marginBottom: 24,
+    paddingVertical: 5,
   },
   forgotPasswordText: {
-    color: '#007AFF', // Standard link blue
+    color: '#2563EB', // Brand Blue
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  loginButton: {
+    backgroundColor: '#2563EB', // Brand Blue
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  loginButtonText: {
     fontSize: 16,
-    textAlign: 'center',
+    fontWeight: '700',
+    color: '#fff',
+    letterSpacing: 0.5,
   },
   loginButtonDisabled: {
-    opacity: 0.6,
+    backgroundColor: '#94A3B8',
+    elevation: 0,
+    shadowOpacity: 0,
   },
+
   // Footer
   footer: {
-    backgroundColor: '#50A8D8', // Light blue
-    padding: 20,
+    paddingVertical: 20,
     alignItems: 'center',
+    marginTop: 'auto',
   },
   footerText: {
-    color: '#FFF',
-    fontSize: 14,
+    color: '#94A3B8',
+    fontSize: 12,
+    fontWeight: '500',
   },
 });
 
