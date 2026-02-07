@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // API Configuration
 const API_BASE_URL = __DEV__ 
-  ? 'http://192.168.33.89:5000/api' // Your Wi-Fi IP address
+  ? 'http://localhost:5000/api' // Use localhost to match frontend origin
   : 'https://your-production-api.com/api'; // Production URL later
 
 // Main authenticated API instance (for user/owner operations)

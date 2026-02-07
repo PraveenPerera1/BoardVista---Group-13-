@@ -216,12 +216,28 @@ export default function BoardVistaDashboard() {
       }}
     >
       <View style={styles.imageContainer}>
-        <Image
-          source={{
-            uri: item.images?.[0]?.url || 'https://picsum.photos/seed/boarding/400/300'
-          }}
-          style={styles.cardImage}
-        />
+        {(() => {
+          const imageUrl = item.images?.[0]?.url;
+          // Check if it's a blob URL (problematic) or valid URL
+          const isBlobUrl = imageUrl?.startsWith('blob:');
+          const isValidUrl = imageUrl && (imageUrl.startsWith('data:') || imageUrl.startsWith('http'));
+          
+          // Only show valid images (data URLs from file picker or HTTP URLs)
+          if (isValidUrl && !isBlobUrl) {
+            return (
+              <Image
+                source={{ uri: imageUrl }}
+                style={styles.cardImage}
+                onError={(error) => {
+                  console.log('Dashboard image load error:', error.nativeEvent.error);
+                }}
+              />
+            );
+          }
+          
+          // Skip invalid images (blob URLs, etc.) - don't show placeholders
+          return null;
+        })()}
         <View style={styles.priceTag}>
           <Text style={styles.priceText}>LKR {item.price.monthly}</Text>
           <Text style={styles.priceSubText}>/mo</Text>

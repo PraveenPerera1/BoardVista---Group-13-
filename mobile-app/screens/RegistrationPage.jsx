@@ -1,16 +1,16 @@
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import {
-  Alert,
-  ImageBackground,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    ImageBackground,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 import { userService } from '../services/userService';
 
@@ -60,6 +60,7 @@ export default function RegistrationPage() {
   // State for custom dropdown
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userType, setUserType] = useState('Select user type...');
+  const [isAdmin, setIsAdmin] = useState(false);
   const userTypes = ['User', 'Owner'];
 
   // Handler for selecting a user type from the custom dropdown
@@ -70,38 +71,62 @@ export default function RegistrationPage() {
 
   // Registration function with API integration
   const handleRegistration = async () => {
+    console.log('=== REGISTER BUTTON CLICKED ===');
+    console.log('Form validation starting...');
+
     if (!name || !email || !phone || !password || !confirmPassword) {
+      console.log('Validation failed: Missing fields');
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
+      console.log('Validation failed: Passwords do not match');
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
 
-    if (userType === 'Select user type...') {
+    if (userType === 'Select user type...' && !isAdmin) {
+      console.log('Validation failed: No user type selected');
       Alert.alert('Error', 'Please select a user type');
       return;
     }
 
+    console.log('Validation passed, proceeding with registration...');
+
     try {
       setLoading(true);
+      console.log('=== REGISTRATION DEBUG ===');
+      console.log('userType:', userType);
+      console.log('isAdmin:', isAdmin);
+      
       // Map user types to backend roles
       let role = 'user'; // default
-      if (userType === 'Owner') {
+      if (isAdmin) {
+        role = 'admin';
+        console.log('Setting role to admin due to isAdmin flag');
+      } else if (userType === 'Owner') {
         role = 'owner';
+        console.log('Setting role to owner');
       } else if (userType === 'User') {
         role = 'user';
+        console.log('Setting role to user');
       }
       
-      const response = await userService.register({
+      console.log('Final role being sent:', role);
+      
+      const registrationData = {
         name,
         email,
         password,
         role,
-        phone: phone,
-      });
+        phone,
+        isAdmin
+      };
+      
+      console.log('Registration data being sent:', registrationData);
+      
+      const response = await userService.register(registrationData);
 
       console.log('Registration successful:', response);
       Alert.alert('Success', 'Registration successful! Please login.');
@@ -261,6 +286,19 @@ export default function RegistrationPage() {
             )}
           </View>
           {/* --- End Dropdown --- */}
+
+          {/* --- Admin Registration Checkbox --- */}
+          <View style={styles.checkboxGroup}>
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              onPress={() => setIsAdmin(!isAdmin)}
+            >
+              <View style={[styles.checkbox, isAdmin && styles.checkboxChecked]}>
+                {isAdmin && <Text style={styles.checkboxCheck}>✓</Text>}
+              </View>
+              <Text style={styles.checkboxLabel}>Register as admin</Text>
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity
             style={[styles.registerButton, loading && styles.registerButtonDisabled]}
@@ -483,6 +521,41 @@ const styles = StyleSheet.create({
   dropdownItemText: {
     fontSize: 15,
     color: '#334155',
+  },
+
+  // Checkbox Styles
+  checkboxGroup: {
+    marginBottom: 20,
+  },
+  checkboxContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#fff',
+    borderRadius: 4,
+    marginRight: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxChecked: {
+    backgroundColor: '#2563EB',
+    borderColor: '#2563EB',
+  },
+  checkboxCheck: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  checkboxLabel: {
+    fontSize: 14,
+    color: '#334155',
+    fontWeight: '500',
   },
 
   // Action Buttons

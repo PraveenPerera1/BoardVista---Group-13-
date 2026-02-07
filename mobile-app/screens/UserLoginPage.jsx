@@ -2,17 +2,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { useState } from 'react';
 import {
-  Alert,
-  ImageBackground,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View
+    Alert,
+    ImageBackground,
+    Pressable,
+    SafeAreaView,
+    ScrollView,
+    StatusBar,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View
 } from 'react-native';
 // Import icon library for React Native
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -105,34 +105,38 @@ const UserLoginPage = () => {
       setLoading(true);
       const response = await userService.login({ email, password, role: 'owner' });
       
-      console.log("🔍 LOGIN RESPONSE STRUCTURE:", JSON.stringify(response, null, 2));
-      console.log("🔍 response.token exists:", !!response.token);
-      console.log("🔍 response.success:", response.success);
+      console.log(" LOGIN RESPONSE STRUCTURE:", JSON.stringify(response, null, 2));
+      console.log(" response.token exists:", !!response.token);
+      console.log(" response.success:", response.success);
+      console.log(" response.isAdmin:", !!response.isAdmin);
       
       // Check multiple possible token locations in response
       const token = response.token || response.data?.token || response.user?.token;
-      console.log("🔍 EXTRACTED TOKEN:", !!token);
+      const isAdmin = response.isAdmin || response.data?.isAdmin || response.user?.isAdmin;
+      console.log(" EXTRACTED TOKEN:", !!token);
+      console.log(" EXTRACTED ISADMIN:", !!isAdmin);
       
       if (token) {
-        console.log("👉 STARTING TOKEN SAVE...");
-        console.log("🔑 Token to save:", token.substring(0, 20) + "...");
+        console.log(" STARTING TOKEN SAVE...");
+        console.log(" Token to save:", token.substring(0, 20) + "...");
 
         // 1. WEB STORAGE (Primary for web platform)
         if (typeof window !== 'undefined' && window.localStorage) {
            try {
              window.localStorage.setItem('authToken', token);
-             window.localStorage.setItem('userRole', 'owner');
-             console.log("✅ SAVED TO BROWSER LOCAL STORAGE"); 
+             window.localStorage.setItem('userRole', isAdmin ? 'admin' : 'user');
+             window.localStorage.setItem('isAdmin', isAdmin.toString());
+             console.log(" SAVED TO BROWSER LOCAL STORAGE"); 
              
              // Verify immediately
              const verifyToken = window.localStorage.getItem('authToken');
-             console.log("🔍 Verification - LocalStorage now has:", verifyToken?.substring(0, 20) + "...");
-             console.log("🔍 Verification - Token length:", verifyToken?.length);
+             console.log(" Verification - LocalStorage now has:", verifyToken?.substring(0, 20) + "...");
+             console.log(" Verification - Token length:", verifyToken?.length);
              if (!verifyToken) {
-               console.error("❌ CRITICAL: Token not found in localStorage immediately after save!");
+               console.error(" CRITICAL: Token not found in localStorage immediately after save!");
              }
            } catch (e) {
-             console.error("❌ Browser localStorage save failed", e);
+             console.error(" Browser localStorage save failed", e);
            }
         }
 
@@ -140,24 +144,26 @@ const UserLoginPage = () => {
         if (typeof window !== 'undefined' && window.sessionStorage) {
            try {
              window.sessionStorage.setItem('authToken', token);
-             window.sessionStorage.setItem('userRole', 'owner');
-             console.log("✅ SAVED TO SESSION STORAGE (fallback)"); 
+             window.sessionStorage.setItem('userRole', isAdmin ? 'admin' : 'user');
+             window.sessionStorage.setItem('isAdmin', isAdmin.toString());
+             console.log(" SAVED TO SESSION STORAGE (fallback)"); 
            } catch (e) {
-             console.error("❌ SessionStorage save failed", e);
+             console.error(" SessionStorage save failed", e);
            }
         }
 
         // 3. ASYNC STORAGE (For mobile platform)
         try {
           await AsyncStorage.setItem('authToken', token);
-          await AsyncStorage.setItem('userRole', 'owner');
-          console.log("✅ SAVED TO ASYNC STORAGE");
+          await AsyncStorage.setItem('userRole', isAdmin ? 'admin' : 'user');
+          await AsyncStorage.setItem('isAdmin', isAdmin.toString());
+          console.log(" SAVED TO ASYNC STORAGE");
           
           // Verify it was saved
           const verifyToken = await AsyncStorage.getItem('authToken');
-          console.log("🔍 Verification - AsyncStorage now has:", verifyToken?.substring(0, 20) + "...");
+          console.log(" Verification - AsyncStorage now has:", verifyToken?.substring(0, 20) + "...");
         } catch (e) {
-          console.error("❌ AsyncStorage failed", e);
+          console.error(" AsyncStorage failed", e);
         }
       }
       
@@ -168,31 +174,45 @@ const UserLoginPage = () => {
       let finalVerification = false;
       if (typeof window !== 'undefined' && window.localStorage) {
         const finalToken = window.localStorage.getItem('authToken');
+        const finalIsAdmin = window.localStorage.getItem('isAdmin') === 'true';
         finalVerification = !!finalToken;
-        console.log("🔍 FINAL VERIFICATION - Token in localStorage:", finalVerification);
+        console.log(" FINAL VERIFICATION - Token in localStorage:", finalVerification);
+        console.log(" FINAL VERIFICATION - IsAdmin in localStorage:", finalIsAdmin);
       }
       
       if (!finalVerification && typeof window !== 'undefined' && window.sessionStorage) {
         const finalToken = window.sessionStorage.getItem('authToken');
+        const finalIsAdmin = window.sessionStorage.getItem('isAdmin') === 'true';
         finalVerification = !!finalToken;
-        console.log("🔍 FINAL VERIFICATION - Token in sessionStorage:", finalVerification);
+        console.log(" FINAL VERIFICATION - Token in sessionStorage:", finalVerification);
+        console.log(" FINAL VERIFICATION - IsAdmin in sessionStorage:", finalIsAdmin);
       }
       
       if (!finalVerification) {
         const asyncToken = await AsyncStorage.getItem('authToken');
+        const asyncIsAdmin = await AsyncStorage.getItem('isAdmin') === 'true';
         finalVerification = !!asyncToken;
-        console.log("🔍 FINAL VERIFICATION - Token in AsyncStorage:", finalVerification);
+        console.log(" FINAL VERIFICATION - Token in AsyncStorage:", finalVerification);
+        console.log(" FINAL VERIFICATION - IsAdmin in AsyncStorage:", asyncIsAdmin);
       }
       
       if (!finalVerification) {
-        console.error("❌ CRITICAL: Token verification failed after all storage attempts!");
+        console.error(" CRITICAL: Token verification failed after all storage attempts!");
         Alert.alert('Error', 'Login succeeded but token storage failed. Please try again.');
         return;
       }
       
       console.log('Login successful:', response);
       Alert.alert('Success', 'Login successful!');
-      navigation.replace("Dashboard");
+      
+      // Redirect based on admin status
+      if (isAdmin) {
+        console.log(" REDIRECTING TO ADMIN AREA");
+        navigation.replace("AdminLanding");
+      } else {
+        console.log(" REDIRECTING TO DASHBOARD");
+        navigation.replace("Dashboard");
+      }
 
     } catch (error) {
       console.log("Login Error:", error);

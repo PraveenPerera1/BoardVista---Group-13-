@@ -17,8 +17,8 @@ const registerValidation = [
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters long'),
   body('role')
-    .isIn(['user', 'owner'])
-    .withMessage('Role must be either user or owner'),
+    .isIn(['user', 'owner', 'admin'])
+    .withMessage('Role must be either user, owner, or admin'),
   body('phone').notEmpty().withMessage('Phone number is required'),
 ];
 

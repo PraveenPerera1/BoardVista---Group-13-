@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
+import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 
 import {
@@ -109,17 +110,120 @@ export default function AddListingScreen() {
 
   // --- Image Handlers ---
   
-  // 1. Manual Image Add
+  // 1. Pick Image from File Picker
+  const pickImage = async () => {
+    try {
+      // Request permission
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Sorry, we need camera roll permissions to make this work!');
+        return;
+      }
+
+      // Launch image picker with base64 for web compatibility
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        base64: true, // Enable base64 for web compatibility
+        allowsMultipleSelection: true, // Enable multiple selection
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        // Handle multiple images
+        const newImages = result.assets.map(selectedImage => {
+          let imageUri = selectedImage.uri;
+          
+          // Detect image format and create appropriate data URL
+          if (selectedImage.base64) {
+            // Get file extension from URI or default to jpeg
+            let fileExtension = 'jpeg';
+            if (selectedImage.uri && selectedImage.uri.toLowerCase().includes('.png')) {
+              fileExtension = 'png';
+            } else if (selectedImage.uri && selectedImage.uri.toLowerCase().includes('.jpg')) {
+              fileExtension = 'jpg';
+            }
+            
+            // Create data URL with correct format
+            imageUri = `data:image/${fileExtension};base64,${selectedImage.base64}`;
+          }
+          
+          return imageUri;
+        });
+        
+        setPhotos(prev => [...prev, ...newImages]);
+      }
+    } catch (error) {
+      console.error('Error picking image:', error);
+      Alert.alert('Error', 'Failed to pick image. Please try again.');
+    }
+  };
+
+  // 2. Take Photo with Camera
+  const takePhoto = async () => {
+    try {
+      // Request permission
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission Required', 'Sorry, we need camera permissions to make this work!');
+        return;
+      }
+
+      // Launch camera with base64 for web compatibility
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 0.8,
+        base64: true, // Enable base64 for web compatibility
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const selectedImage = result.assets[0];
+        
+        // Detect image format and create appropriate data URL
+        let imageUri = selectedImage.uri;
+        
+        if (selectedImage.base64) {
+          // Get file extension from URI or default to jpeg
+          let fileExtension = 'jpeg';
+          if (selectedImage.uri && selectedImage.uri.toLowerCase().includes('.png')) {
+            fileExtension = 'png';
+          } else if (selectedImage.uri && selectedImage.uri.toLowerCase().includes('.jpg')) {
+            fileExtension = 'jpg';
+          }
+          
+          // Create data URL with correct format
+          imageUri = `data:image/${fileExtension};base64,${selectedImage.base64}`;
+        }
+        
+        setPhotos(prev => [...prev, imageUri]);
+      }
+    } catch (error) {
+      console.error('Error taking photo:', error);
+      Alert.alert('Error', 'Failed to take photo. Please try again.');
+    }
+  };
+
+  // 3. Manual Image Add
   const addManualPhoto = () => {
     if (!manualImageUrl.trim()) {
       Alert.alert("Empty", "Please enter a valid image URL");
       return;
     }
-    setPhotos(prev => [...prev, manualImageUrl]);
+    
+    // Validate URL format (basic check for image URLs)
+    const urlPattern = /(https?:\/\/.*\.(jpg|jpeg|png|gif|webp))/i;
+    if (!urlPattern.test(manualImageUrl.trim()) && !manualImageUrl.startsWith('data:image/')) {
+      Alert.alert("Invalid URL", "Please enter a valid image URL (JPG, JPEG, PNG, GIF, or WebP)");
+      return;
+    }
+    
+    setPhotos(prev => [...prev, manualImageUrl.trim()]);
     setManualImageUrl(''); 
   };
 
-  // 2. Remove Photo
+  // 4. Remove Photo
   const removePhoto = (index) => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
@@ -375,22 +479,39 @@ export default function AddListingScreen() {
         onChangeText={(text) => setFormData(prev => ({...prev, nearbyServices: text}))}
       />
 
-      {/* Manual Image Input (Replaces ImagePicker) */}
+      {/* Boarding Images Section */}
       <View style={styles.inputRowMulti}>
-        <Text style={styles.rowLabelMulti}>Boarding Images (URL)</Text>
+        <Text style={styles.rowLabelMulti}>Boarding Images</Text>
+        
+        {/* Manual Image URL Input */}
         <View style={styles.manualInputContainer}>
           <TextInput
             style={styles.manualInput}
-            placeholder="Paste https:// image link..."
+            placeholder="Enter image URL (JPG/JPEG/PNG)"
+            placeholderTextColor="#999"
             value={manualImageUrl}
             onChangeText={setManualImageUrl}
           />
           <TouchableOpacity style={styles.addButton} onPress={addManualPhoto}>
-            <Text style={styles.addButtonText}>ADD</Text>
+            <Text style={styles.addButtonText}>Add URL</Text>
           </TouchableOpacity>
         </View>
-        <Text style={styles.helperText}>*Paste image links for testing (Unsplash etc.)</Text>
 
+        {/* Image Picker Buttons */}
+        <View style={styles.imagePickerContainer}>
+          <TouchableOpacity style={styles.imagePickerButton} onPress={pickImage}>
+            <Ionicons name="images-outline" size={20} color="#fff" />
+            <Text style={styles.imagePickerButtonText}>Choose from Gallery</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity style={[styles.imagePickerButton, styles.cameraButton]} onPress={takePhoto}>
+            <Ionicons name="camera-outline" size={20} color="#fff" />
+            <Text style={styles.imagePickerButtonText}>Take Photo</Text>
+          </TouchableOpacity>
+        </View>
+
+       
+        {/* Image Preview */}
         <View style={styles.imagePreviewContainer}>
           {photos.map((photo, index) => (
             <View key={index} style={styles.imagePreview}>
@@ -467,6 +588,13 @@ const styles = StyleSheet.create({
   rowLabelMulti: { fontSize: 14, color: '#333', fontWeight: '500', marginBottom: 10 },
   rowInput: { flex: 2, fontSize: 14, backgroundColor: '#fff', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 5, borderWidth: 1, borderColor: '#ccc' },
   multilineInput: { backgroundColor: '#fff', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 5, borderWidth: 1, borderColor: '#ccc', height: 80, textAlignVertical: 'top' },
+
+  // Image Picker Styles
+  imagePickerContainer: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15 },
+  imagePickerButton: { flex: 1, backgroundColor: '#007BFF', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', padding: 12, borderRadius: 8, marginHorizontal: 5 },
+  cameraButton: { backgroundColor: '#28A745' },
+  imagePickerButtonText: { color: '#fff', fontWeight: '600', marginLeft: 8, fontSize: 14 },
+  sectionSubTitle: { fontSize: 13, color: '#666', fontWeight: '500', marginBottom: 8, marginTop: 10 },
 
   // Manual Image Input Styles
   manualInputContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 5 },

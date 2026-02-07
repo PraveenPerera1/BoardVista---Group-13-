@@ -5,10 +5,19 @@ export const userService = {
   // User registration
   register: async (userData) => {
     try {
+      console.log('=== USER SERVICE REGISTER ===');
+      console.log('Sending registration data to API:', userData);
+      console.log('API endpoint: /users/register');
+      
       const response = await api.post('/users/register', userData);
+      console.log('API response received:', response);
+      console.log('Response data:', response.data);
       return response.data;
     } catch (error) {
       console.error('Error registering user:', error);
+      console.error('Error response:', error?.response);
+      console.error('Error status:', error?.response?.status);
+      console.error('Error data:', error?.response?.data);
       throw error;
     }
   },

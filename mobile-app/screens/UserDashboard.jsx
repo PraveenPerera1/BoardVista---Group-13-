@@ -10,9 +10,8 @@ import {
   StatusBar,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { boardingService } from '../services/boardingService';
 
@@ -179,9 +178,39 @@ export default function UserDashboard() {
               contentContainerStyle={styles.carouselContent}
               style={styles.carousel}
             >
-              <Image source={{ uri: 'https://picsum.photos/seed/room1/400/300' }} style={styles.carouselImage} />
-              <Image source={{ uri: 'https://picsum.photos/seed/room2/400/300' }} style={styles.carouselImage} />
-              <Image source={{ uri: 'https://picsum.photos/seed/room3/400/300' }} style={styles.carouselImage} />
+              {currentBoarding?.images?.map((image, index) => {
+                // Check if image is a blob URL (problematic) or valid URL
+                const isBlobUrl = image.url?.startsWith('blob:');
+                const isValidUrl = image.url && (image.url.startsWith('data:') || image.url.startsWith('http'));
+                
+                // Only show valid images (data URLs from file picker or HTTP URLs)
+                if (isValidUrl && !isBlobUrl) {
+                  return (
+                    <Image 
+                      key={index} 
+                      source={{ uri: image.url }} 
+                      style={styles.carouselImage}
+                      onError={(error) => {
+                        console.log('Image load error:', error.nativeEvent.error);
+                      }}
+                    />
+                  );
+                }
+                
+                // Skip invalid images (blob URLs, etc.) - don't show placeholders
+                return null;
+              }).filter(Boolean)} 
+              
+              {/* Show message if no valid images */}
+              {(!currentBoarding?.images?.filter(img => 
+                img.url && 
+                !img.url.startsWith('blob:') && 
+                (img.url.startsWith('data:') )
+              ).length) && (
+                <View style={styles.noImagesContainer}>
+                  <Text style={styles.noImagesText}>No images available</Text>
+                </View>
+              )}
             </ScrollView>
 
             {/* Info Grid - Modernized */}
@@ -250,31 +279,18 @@ export default function UserDashboard() {
                 <StarRating rating={4} />
               </View>
 
-              <TouchableOpacity onPress={() => navigation.navigate("ReviewPage", { 
-                boardingId: boardingId, 
-                boardingTitle: currentBoarding?.title || 'Boarding House' 
-              })}
-                style={styles.textInput}
-                placeholderTextColor="#94A3B8"
+              <TouchableOpacity 
+                onPress={() => navigation.navigate("ReviewPage", { 
+                  boardingId: boardingId, 
+                  boardingTitle: currentBoarding?.title || 'Boarding House' 
+                })}
+                style={styles.reviewInput}
               >
-                <Text style={styles.textInputPlaceholder}>Write a review</Text>
+                <Text style={styles.reviewInputPlaceholder}>Write a review</Text>
               </TouchableOpacity>
             </View>
 
-            {/* Complains Card */}
-            <View style={styles.card}>
-              <Text style={styles.cardTitle}>Have a Complaint?</Text>
-              <Text style={styles.cardSubtitle}>Let us know if something isn't right.</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                placeholder="Describe the issue here..."
-                placeholderTextColor="#94A3B8"
-                multiline
-              />
-              <TouchableOpacity style={styles.submitButton}>
-                <Text style={styles.submitButtonText}>SUBMIT COMPLAINT</Text>
-              </TouchableOpacity>
-            </View>
+            
 
             
           </View>
@@ -283,7 +299,7 @@ export default function UserDashboard() {
 
         {/* === BOTTOM FOOTER === */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>© 2025 BoardVista</Text>
+          <Text style={styles.footerText}> BoardVista</Text>
           <Text style={styles.footerSubText}>All Rights Reserved</Text>
         </View>
       </ScrollView>
@@ -607,6 +623,20 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
   },
 
+  // Review Input
+  reviewInput: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 10,
+  },
+  reviewInputPlaceholder: {
+    color: '#94A3B8',
+    fontSize: 14,
+  },
+
   // Inputs & Form
   textInput: {
     backgroundColor: '#F1F5F9',
@@ -628,12 +658,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 12,
   },
-  submitButtonText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 13,
-    letterSpacing: 0.5,
-  },
+ 
 
   // FAQ Skeleton
   faqContainer: {
@@ -654,6 +679,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     borderRadius: 6,
     width: '60%',
+  },
+
+  // No Images Container
+  noImagesContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 200,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    borderStyle: 'dashed',
+  },
+  noImagesText: {
+    color: '#94A3B8',
+    fontSize: 16,
+    fontWeight: '500',
   },
 
   // === FOOTER ===
