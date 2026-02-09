@@ -178,104 +178,10 @@ export default function BoardVistaDashboard() {
         />
       </View>
       <TouchableOpacity style={styles.filterButton } onPress={handleFilter}>
-        <Ionicons name="options-outline" size={20} color="#fff" />
+        <Feather name="filter" size={18} color="#fff" />
+        <Text style={styles.filterButtonText}>Filter</Text>
       </TouchableOpacity>
     </View>
-  );
-
-  const renderCategories = () => (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryList} contentContainerStyle={{paddingHorizontal: 20}}>
-      {CATEGORIES.map((cat, index) => (
-        <TouchableOpacity
-          key={index}
-          style={[
-            styles.categoryChip,
-            selectedCategory === cat && styles.categoryChipActive
-          ]}
-          onPress={() => setSelectedCategory(cat)}
-        >
-          <Text style={[
-            styles.categoryText,
-            selectedCategory === cat && styles.categoryTextActive
-          ]}>
-            {cat}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  );
-
-  const renderBoardingCard = (item: any) => (
-    <TouchableOpacity 
-      key={item._id} 
-      style={styles.card} 
-      activeOpacity={0.9}
-      onPress={() => {
-        console.log('Navigating to UserDashboard with boardingId:', item._id);
-        navigation.navigate("UserDashboard", { boardingId: item._id });
-      }}
-    >
-      <View style={styles.imageContainer}>
-        {(() => {
-          const imageUrl = item.images?.[0]?.url;
-          // Check if it's a blob URL (problematic) or valid URL
-          const isBlobUrl = imageUrl?.startsWith('blob:');
-          const isValidUrl = imageUrl && (imageUrl.startsWith('data:') || imageUrl.startsWith('http'));
-          
-          // Only show valid images (data URLs from file picker or HTTP URLs)
-          if (isValidUrl && !isBlobUrl) {
-            return (
-              <Image
-                source={{ uri: imageUrl }}
-                style={styles.cardImage}
-                onError={(error) => {
-                  console.log('Dashboard image load error:', error.nativeEvent.error);
-                }}
-              />
-            );
-          }
-          
-          // Skip invalid images (blob URLs, etc.) - don't show placeholders
-          return null;
-        })()}
-        <View style={styles.priceTag}>
-          <Text style={styles.priceText}>LKR {item.price.monthly}</Text>
-          <Text style={styles.priceSubText}>/mo</Text>
-        </View>
-        {item.isVerified && (
-          <View style={styles.verifiedBadge}>
-            <MaterialIcons name="verified" size={14} color="#2563EB" />
-            <Text style={styles.verifiedText}>Verified</Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.cardContent}>
-        <View style={styles.titleRow}>
-             <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-             <View style={styles.ratingContainer}>
-                 <Ionicons name="star" size={10} color="#F59E0B" />
-                 <Text style={styles.ratingText}>4.5</Text>
-             </View>
-        </View>
-        
-        <View style={styles.cardLocation}>
-          <Ionicons name="location-outline" size={12} color="#64748B" />
-          <Text style={styles.cardLocationText} numberOfLines={1}>
-            {item.address}
-          </Text>
-        </View>
-        
-        <View style={styles.facilitiesRow}>
-             <Text style={styles.facilityText}>
-                 {item.gender === 'male' ? '♂ Male' : item.gender === 'female' ? '♀ Female' : '⚥ Mixed'}
-             </Text>
-             <Text style={styles.dotSeparator}>•</Text>
-             <Text style={styles.facilityText}>
-                {item.roomTypes?.[0]?.capacity || 'N/A'} ppl
-             </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
   );
 
   // Price Filter Modal Component
@@ -289,13 +195,41 @@ export default function BoardVistaDashboard() {
       <View style={styles.modalOverlay}>
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Price Range Filter</Text>
+            <Text style={styles.modalTitle}>Filter</Text>
             <TouchableOpacity onPress={() => setShowPriceFilter(false)}>
               <Ionicons name="close" size={24} color="#64748B" />
             </TouchableOpacity>
           </View>
           
           <View style={styles.modalContent}>
+            <Text style={styles.priceLabel}>Category</Text>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.modalCategoryList}
+              contentContainerStyle={{ paddingRight: 4 }}
+            >
+              {CATEGORIES.map((cat, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={[
+                    styles.categoryChip,
+                    selectedCategory === cat && styles.categoryChipActive,
+                  ]}
+                  onPress={() => setSelectedCategory(cat)}
+                >
+                  <Text
+                    style={[
+                      styles.categoryText,
+                      selectedCategory === cat && styles.categoryTextActive,
+                    ]}
+                  >
+                    {cat}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
             <Text style={styles.priceLabel}>Minimum Price (LKR)</Text>
             <View style={styles.priceInputContainer}>
               <TouchableOpacity 
@@ -380,6 +314,79 @@ export default function BoardVistaDashboard() {
     return matchesCategory && matchesSearch && matchesPrice;
   });
 
+  const renderBoardingCard = (item: any) => (
+    <TouchableOpacity 
+      key={item._id} 
+      style={styles.card} 
+      activeOpacity={0.9}
+      onPress={() => {
+        console.log('Navigating to UserDashboard with boardingId:', item._id);
+        navigation.navigate("UserDashboard", { boardingId: item._id });
+      }}
+    >
+      <View style={styles.imageContainer}>
+        {(() => {
+          const imageUrl = item.images?.[0]?.url;
+          // Check if it's a blob URL (problematic) or valid URL
+          const isBlobUrl = imageUrl?.startsWith('blob:');
+          const isValidUrl = imageUrl && (imageUrl.startsWith('data:') || imageUrl.startsWith('http'));
+          
+          // Only show valid images (data URLs from file picker or HTTP URLs)
+          if (isValidUrl && !isBlobUrl) {
+            return (
+              <Image
+                source={{ uri: imageUrl }}
+                style={styles.cardImage}
+                onError={(error) => {
+                  console.log('Dashboard image load error:', error.nativeEvent.error);
+                }}
+              />
+            );
+          }
+          
+          // Skip invalid images (blob URLs, etc.) - don't show placeholders
+          return null;
+        })()}
+        <View style={styles.priceTag}>
+          <Text style={styles.priceText}>LKR {item.price.monthly}</Text>
+          <Text style={styles.priceSubText}>/mo</Text>
+        </View>
+        {item.isVerified && (
+          <View style={styles.verifiedBadge}>
+            <MaterialIcons name="verified" size={14} color="#2563EB" />
+            <Text style={styles.verifiedText}>Verified</Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.cardContent}>
+        <View style={styles.titleRow}>
+             <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
+             <View style={styles.ratingContainer}>
+                 <Ionicons name="star" size={10} color="#F59E0B" />
+                 <Text style={styles.ratingText}>4.5</Text>
+             </View>
+        </View>
+        
+        <View style={styles.cardLocation}>
+          <Ionicons name="location-outline" size={12} color="#64748B" />
+          <Text style={styles.cardLocationText} numberOfLines={1}>
+            {item.address}
+          </Text>
+        </View>
+        
+        <View style={styles.facilitiesRow}>
+             <Text style={styles.facilityText}>
+                 {item.gender === 'male' ? '♂ Male' : item.gender === 'female' ? '♀ Female' : '⚥ Mixed'}
+             </Text>
+             <Text style={styles.dotSeparator}>•</Text>
+             <Text style={styles.facilityText}>
+                {item.roomTypes?.[0]?.capacity || 'N/A'} ppl
+             </Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
@@ -397,7 +404,6 @@ export default function BoardVistaDashboard() {
         </View>
 
         {renderSearchBar()}
-        {renderCategories()}
 
         {/* Loading State */}
         {loading && (
@@ -474,6 +480,14 @@ export default function BoardVistaDashboard() {
 
       {/* Price Filter Modal */}
       {renderPriceFilterModal()}
+
+      <TouchableOpacity
+        style={styles.chatFab}
+        onPress={() => navigation.navigate("ChatScreen")}
+      >
+        <Ionicons name="chatbubble-ellipses" size={20} color="#fff" />
+        <Text style={styles.chatFabText}>Chat Bot</Text>
+      </TouchableOpacity>
 
       {/* --- Floating Navigation Bar --- */}
       <View style={styles.floatingNavContainer}>
@@ -616,12 +630,13 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   filterButton: {
-    width: 50,
-    height: 50,
+    minHeight: 50,
     backgroundColor: '#2563EB', // Royal Blue
     borderRadius: 14,
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 14,
     marginLeft: 12,
     shadowColor: '#2563EB',
     shadowOffset: { width: 0, height: 4 },
@@ -629,11 +644,16 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
+  filterButtonText: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '700',
+    marginLeft: 6,
+  },
 
-  // Categories
-  categoryList: {
-    marginBottom: 25,
-    paddingLeft: 4, // Offset for padding inside scrollView
+  modalCategoryList: {
+    marginBottom: 16,
+    paddingLeft: 2,
   },
   categoryChip: {
     paddingHorizontal: 20,
@@ -922,10 +942,33 @@ const styles = StyleSheet.create({
   // Floating Nav
   floatingNavContainer: {
     position: 'absolute',
-    bottom: 30,
+    bottom: 10,
     left: 0,
     right: 0,
     alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chatFab: {
+    position: 'absolute',
+    right: 24,
+    bottom: 90,
+    backgroundColor: '#2563EB',
+    borderRadius: 999,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
+  },
+  chatFabText: {
+    color: '#fff',
+    fontWeight: '700',
+    marginLeft: 8,
   },
   floatingNav: {
     flexDirection: 'row',

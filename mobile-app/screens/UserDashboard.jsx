@@ -251,13 +251,9 @@ export default function UserDashboard() {
 
               {/* Action Buttons */}
               <View style={styles.actionButtonsContainer}>
-                <TouchableOpacity style={[styles.actionButton, styles.secondaryButton]}>
+               {/*} <TouchableOpacity style={[styles.actionButton, styles.secondaryButton]}>
                   <Text style={styles.secondaryButtonText}>♥ Save</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.actionButton, styles.primaryButton]}
-                onPress={()=>navigation.navigate("ChatScreen")}>
-                  <Text style={styles.primaryButtonText}>💬Chat</Text>
-                </TouchableOpacity>
+                </TouchableOpacity>*/}
               </View>
             </View>
           </View>
